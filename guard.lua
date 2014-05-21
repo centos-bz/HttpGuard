@@ -144,6 +144,8 @@ function Guard:redirectModules(ip,reqUri)
 							newUrl = table.concat({reqUri,"&cckey=",key_new,"&e=",expire})
 						end
 
+						--删除cookie
+						ngx.header['Set-Cookie'] = {"key302=; path=/", "expire302=; expires=Sat, 01-Jan-2000 00:00:00 GMT; path=/"}
 						return ngx.redirect(newUrl, 302) --发送302转向						
 					end
 				else
@@ -234,6 +236,8 @@ function Guard:JsJumpModules(ip,reqUri)
 
 						local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
 						ngx.header.content_type = "text/html"
+						--删除cookie
+						ngx.header['Set-Cookie'] = {"key302=; path=/", "expire302=; expires=Sat, 01-Jan-2000 00:00:00 GMT; path=/"}						
 						ngx.print(jsJumpCode)
 						ngx.exit(200)					
 					end
