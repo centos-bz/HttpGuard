@@ -216,7 +216,8 @@ function Guard:JsJumpModules(ip,reqUri)
 				local cookie_key = ngx.var["cookie_keyjs"] --获取cookie密钥
 				local cookie_expire = ngx.var["cookie_expirejs"] --获取cookie密钥过期时间
 				local now = ngx.time() --当前时间戳
-
+				local args = ngx.req.get_uri_args()
+				
 				if cookie_key and cookie_expire then
 					local key_make = ngx.md5(table.concat({ip,_Conf.JsJumpModules.keySecret,cookie_expire}))
 					if tonumber(cookie_expire) > now and cookie_key == key_make then
@@ -237,12 +238,11 @@ function Guard:JsJumpModules(ip,reqUri)
 						local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
 						ngx.header.content_type = "text/html"
 						--删除cookie
-						ngx.header['Set-Cookie'] = {"key302=; path=/", "expire302=; expires=Sat, 01-Jan-2000 00:00:00 GMT; path=/"}						
+						ngx.header['Set-Cookie'] = {"keyjs=; path=/", "expirejs=; expires=Sat, 01-Jan-2000 00:00:00 GMT; path=/"}						
 						ngx.print(jsJumpCode)
 						ngx.exit(200)					
 					end
 				else
-					local args = ngx.req.get_uri_args()
 					local ccKeyValue = args["cckey"] --获取url中的cckey参数
 					local expire = args['e'] --获取过期时间
 
