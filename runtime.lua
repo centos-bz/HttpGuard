@@ -11,7 +11,7 @@ if ngx.re.match(reqUri,"/get-captcha.jpg$","i") then
 	Guard:getCaptcha()
 
 --验证验证码
-elseif ngx.re.match(reqUri,"/verify-captcha$","i") then
+elseif ngx.re.match(reqUri,"/verify-captcha.jpg$","i") then
 	Guard:verifyCaptcha(ip)
 
 --过滤php请求
