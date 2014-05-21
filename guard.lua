@@ -125,6 +125,7 @@ function Guard:redirectModules(ip,reqUri)
 				local cookie_key = ngx.var["cookie_key302"] --获取cookie密钥
 				local cookie_expire = ngx.var["cookie_expire302"] --获取cookie密钥过期时间
 				local now = ngx.time() --当前时间戳
+				local args = ngx.req.get_uri_args()
 
 				if cookie_key and cookie_expire then
 					local key_make = ngx.md5(table.concat({ip,_Conf.redirectModules.keySecret,cookie_expire}))
@@ -146,7 +147,6 @@ function Guard:redirectModules(ip,reqUri)
 						return ngx.redirect(newUrl, 302) --发送302转向						
 					end
 				else
-					local args = ngx.req.get_uri_args()
 					local ccKeyValue = args["cckey"] --获取url中的cckey参数
 					local expire = args['e'] --获取过期时间
 
