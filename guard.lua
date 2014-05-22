@@ -217,7 +217,7 @@ function Guard:JsJumpModules(ip,reqUri)
 				local cookie_expire = ngx.var["cookie_expirejs"] --获取cookie密钥过期时间
 				local now = ngx.time() --当前时间戳
 				local args = ngx.req.get_uri_args()
-				
+
 				if cookie_key and cookie_expire then
 					local key_make = ngx.md5(table.concat({ip,_Conf.JsJumpModules.keySecret,cookie_expire}))
 					if tonumber(cookie_expire) > now and cookie_key == key_make then

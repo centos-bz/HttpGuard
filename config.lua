@@ -1,7 +1,7 @@
 local Config = {
 	
 	--被动防御,限制访问次数
-	limitReqModules = { state = "On" , maxReqs = 300, keySecret = "948gkj3jdls",keyExpire = 600,amongTime = 60, action = "captchaAction" },
+	limitReqModules = { state = "On" , maxReqs = 50, keySecret = "948gkj3jdls",keyExpire = 600,amongTime = 10, action = "captchaAction" },
 
 	--主动防御,发送302跳转识别
 	redirectModules = { state = "Off" ,whiteTime = 3600, keySecret = "5C6NR8wLg2", keyExpire = 600, urlProtect = "/data/www/waf/send_302_redirect_url_protect"},
