@@ -4,10 +4,10 @@ local Config = {
 	limitReqModules = { state = "On" , maxReqs = 50, keySecret = "948gkj3jdls",keyExpire = 600,amongTime = 10, action = "captchaAction" },
 
 	--主动防御,发送302跳转识别
-	redirectModules = { state = "Off" ,whiteTime = 3600, keySecret = "5C6NR8wLg2", keyExpire = 600, urlProtect = "/data/www/waf/send_302_redirect_url_protect"},
+	redirectModules = { state = "Off" , keySecret = "5C6NR8wLg2", keyExpire = 600, urlProtect = "/data/www/waf/send_302_redirect_url_protect"},
 
 	--主动防御,发送js跳转代码
-	JsJumpModules = { state = "Off" ,whiteTime = 3600, keySecret = "39durm82df",keyExpire = 600, urlProtect = "/data/www/waf/send_js_redirect_url_protect"},
+	JsJumpModules = { state = "Off" , keySecret = "39durm82df",keyExpire = 600, urlProtect = "/data/www/waf/send_js_redirect_url_protect"},
 
 	--黑名单时间
 	blockTime = 600,
