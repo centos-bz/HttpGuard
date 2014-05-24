@@ -12,6 +12,9 @@ local Config = {
 	--主动防御,发送js跳转代码
 	JsJumpModules = { state = "Off" ,verifyMaxFail = 3, amongTime = 60 , urlProtect = baseDir.."url-protect/js.txt"},
 
+	--自动开启防御
+	autoEnable = { state = "off", protectPort = "80", maxConnection = 1000, ssCommand = "/usr/sbin/ss" ,enableModule = "redirectModules"},
+
 	--key值
 	keySecret = '948gkj3jdls',
 

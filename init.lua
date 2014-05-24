@@ -2,7 +2,8 @@ local Config = require("config")
 
 --开关转换为true或false函数
 local function optionIsOn(options)
-	if options == "On" then
+	local options = string.lower(options)
+	if options == "on" then
 		return true
 	else
 		return false
@@ -100,11 +101,12 @@ _Conf = {
 	JsJumpModules = Config.JsJumpModules,
 	whiteIpModules = Config.whiteIpModules,
 	realIpFromHeader = Config.realIpFromHeader,
+	autoEnable = Config.autoEnable,
 	debug = Config.debug,
 	blockTime = Config.blockTime,
 	keySecret = Config.keySecret,
 	keyExpire = Config.keyExpire,
-	sudoPass = Confg.sudoPass
+	sudoPass = Config.sudoPass,
 
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
@@ -112,6 +114,7 @@ _Conf = {
 	JsJumpModulesIsOn = optionIsOn(Config.JsJumpModules.state),
 	whiteIpModulesIsOn = optionIsOn(Config.whiteIpModules.state),
 	realIpFromHeaderIsOn = optionIsOn(Config.realIpFromHeader.state),
+	autoEnableIsOn = optionIsOn(Config.autoEnable.state),
 
 	--解析文件到正则
 	redirectUrlProtect = parseRuleFile(Config.redirectModules.urlProtect),
@@ -139,6 +142,9 @@ _Conf = {
 	--解析url匹配模式
 	uriMode = urlMode1(Config.urlMatchMode),
 	requestUriMode = urlMode2(Config.urlMatchMode),
+
+	nomalTimes = 0,
+	exceedTimes = 0,
 
 }
 

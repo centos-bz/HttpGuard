@@ -25,6 +25,11 @@ elseif ngx.re.match(reqUri,"/verify-captcha.jpg$","i") then
 
 --过滤请求
 else
+	--定时检查连接数
+	if _Conf.autoEnableIsOn then
+		ngx.timer.at(0,Guard.autoSwitch)
+	end
+		
 	--白名单模块
 	if not Guard:ipInWhiteList(ip) then
 		--黑名单模块

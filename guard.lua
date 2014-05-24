@@ -517,14 +517,79 @@ function Guard:takeAction(ip,reqUri)
 		self:forbiddenAction()
 
 	elseif _Conf.iptablesAction then
-		ngx.thread.spawn(addToIptables,ip)
+		ngx.thread.spawn(Guard.addToIptables,Guard,ip)
 	end
 end
 
 --添加进iptables drop表
-function addToIptables(ip)
-	local cmd = "sudo /sbin/iptables -I INPUT -p tcp -s "..ip.." --dport 80 -j DROP"
+function Guard:addToIptables(ip)
+	local cmd = "echo _Conf.sudoPass | sudo -S /sbin/iptables -I INPUT -p tcp -s "..ip.." --dport 80 -j DROP"
 	os.execute(cmd)
+end
+
+--自动开启或关闭防cc功能
+function Guard:autoSwitch()
+	if not _Conf.dict:get("monitor") then
+		_Conf.dict:set("monitor",0,30)
+		local f=io.popen(_Conf.autoEnable.ssCommand.." -tan state established '( sport = :".._Conf.autoEnable.protectPort.." )' | wc -l")
+		local result=f:read("*all")
+		local connection=tonumber(result)
+		Guard:debug("current connection for port ".._Conf.autoEnable.protectPort.." is "..connection)
+		if _Conf.autoEnable.enableModule == "redirectModules" then
+			if _Conf.redirectModulesIsOn then
+				_Conf.exceedTimes = 0 --超限次数清0
+				--如果当前连接在最大连接之下,为正常次数加1
+				if connection < _Conf.autoEnable.maxConnection then
+					_Conf.nomalTimes = _Conf.nomalTimes + 1
+				end
+
+				--如果正常次数大于3,关闭redirectModules
+				if _Conf.nomalTimes > 3 then
+					ngx.log(ngx.ERR,"turn redirectModules off.")
+					_Conf.redirectModulesIsOn = false
+				end	
+			else
+				_Conf.nomalTimes = 0 --正常次数清0
+				--如果当前连接在最大连接之上,为超限次数加1
+				if connection > _Conf.autoEnable.maxConnection then
+					_Conf.exceedTimes = _Conf.exceedTimes + 1
+				end
+
+				--如果超限次数大于2,开启redirectModules
+				if _Conf.exceedTimes > 2 then
+					ngx.log(ngx.ERR,"turn redirectModules on.")
+					_Conf.redirectModulesIsOn = true
+				end					
+			end
+
+		elseif 	_Conf.autoEnable.enableModule == "JsJumpModules" then
+			if _Conf.JsJumpModulesIsOn then
+				_Conf.exceedTimes = 0 --超限次数清0
+				--如果当前连接在最大连接之下,为正常次数加1
+				if connection < _Conf.autoEnable.maxConnection then
+					_Conf.nomalTimes = _Conf.nomalTimes + 1
+				end
+
+				--如果正常次数大于3,关闭JsJumpModules
+				if _Conf.nomalTimes > 3 then
+					ngx.log(ngx.ERR,"turn JsJumpModules off.")
+					_Conf.JsJumpModulesIsOn = false
+				end	
+			else
+				_Conf.nomalTimes = 0 --正常次数清0
+				--如果当前连接在最大连接之上,为超限次数加1
+				if connection > _Conf.autoEnable.maxConnection then
+					_Conf.exceedTimes = _Conf.exceedTimes + 1
+				end
+
+				--如果超限次数大于2,开启JsJumpModules
+				if _Conf.exceedTimes > 2 then
+					ngx.log(ngx.ERR,"turn JsJumpModules on.")
+					_Conf.JsJumpModulesIsOn = true
+				end					
+			end
+		end	
+	end	
 end
 
 return Guard
