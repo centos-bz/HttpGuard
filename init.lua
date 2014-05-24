@@ -25,7 +25,7 @@ end
 
 --解析动作
 local function actionIsOn1(action)
-	if action == "captchaAction" then
+	if action == "captcha" then
 		return true	
 	else
 		return false
@@ -33,12 +33,38 @@ local function actionIsOn1(action)
 end
 
 local function actionIsOn2(action)
-	if action == "forbiddenAction" then
+	if action == "forbidden" then
 		return true
 	else
 		return false
 	end	
 end
+
+local function actionIsOn3(action)
+	if action == "iptables" then
+		return true
+	else
+		return false
+	end	
+end
+
+--解析uri匹配模式
+local function urlMode1(mode)
+	if mode == "uri" then
+		return true
+	else
+		return false
+	end
+end
+
+local function urlMode2(mode)
+	if mode == "requestUri" then
+		return true
+	else
+		return false
+	end	
+end
+
 
 --读取文件到内存
 local function readFile2Mem(file)
@@ -76,6 +102,8 @@ _Conf = {
 	realIpFromHeader = Config.realIpFromHeader,
 	debug = Config.debug,
 	blockTime = Config.blockTime,
+	keySecret = Config.keySecret,
+	keyExpire = Config.keyExpire,
 
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
@@ -87,6 +115,7 @@ _Conf = {
 	--解析文件到正则
 	redirectUrlProtect = parseRuleFile(Config.redirectModules.urlProtect),
 	JsJumpUrlProtect = parseRuleFile(Config.JsJumpModules.urlProtect),
+	limitUrlProtect = parseRuleFile(Config.limitReqModules.urlProtect),
 	whiteIpList = parseRuleFile(Config.whiteIpModules.ipList),
 
 	--读取文件到内存
@@ -102,8 +131,13 @@ _Conf = {
 	--验证码图片路径
 	captchaDir = Config.captchaDir,
 
-	captchaAction = actionIsOn1(Config.limitReqModules.action),
-	forbiddenAction = actionIsOn2(Config.limitReqModules.action),
+	captchaAction = actionIsOn1(Config.blockAction),
+	forbiddenAction = actionIsOn2(Config.blockAction),
+	iptablesAction = actionIsOn3(Config.blockAction),
+
+	--解析url匹配模式
+	uriMode = urlMode1(Config.urlMatchMode),
+	requestUriMode = urlMode2(Config.urlMatchMode),
 
 }
 
