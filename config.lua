@@ -26,6 +26,9 @@ local Config = {
 
 	--匹配url模式，可选值requestUri,uri(注:requestUri是浏览器最初请求的地址且没有被decode,带参数;uri为经过重写过的地址,不带参数,且已经decode.)
 	urlMatchMode = "uri",
+
+	--nginx运行用户的sudo 密码
+	sudoPass = '',
 	
 	--验证码页面路径
 	captchaPage = baseDir.."html/captcha.html",
