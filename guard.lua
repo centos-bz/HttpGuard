@@ -523,7 +523,7 @@ end
 
 --添加进iptables drop表
 function Guard:addToIptables(ip)
-	local cmd = "echo _Conf.sudoPass | sudo -S /sbin/iptables -I INPUT -p tcp -s "..ip.." --dport 80 -j DROP"
+	local cmd = "echo ".._Conf.sudoPass.." | sudo -S /sbin/iptables -I INPUT -p tcp -s "..ip.." --dport 80 -j DROP"
 	os.execute(cmd)
 end
 
