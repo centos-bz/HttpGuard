@@ -7,15 +7,6 @@ function Guard:debug(data)
 	end
 end
 
---获取表元素数量
-function Guard:tlen(t)
-   local c = 0
-   for k,v in pairs(t) do
-        c = c+1
-   end
-   return c
-end
-
 --获取真实ip
 function Guard:getRealIp(remoteIp,headers)
 	if _Conf.realIpFromHeaderIsOn then
@@ -90,7 +81,6 @@ function Guard:redirectModules(ip,reqUri)
 		local cookie_key = ngx.var["cookie_key302"] --获取cookie密钥
 		local cookie_expire = ngx.var["cookie_expire302"] --获取cookie密钥过期时间
 		local now = ngx.time() --当前时间戳
-		local args = ngx.req.get_uri_args()
 		local challengeTimesKey = table.concat({ip,"challenge"})
 		local challengeTimesValue = _Conf.dict:get(challengeTimesKey)
 		local blackKey = ip.."black"
@@ -111,24 +101,20 @@ function Guard:redirectModules(ip,reqUri)
 				local key_new = string.sub(key_new,"1","10")					
 				--定义转向的url
 				local newUrl = ''
-				if self:tlen(args) == 0 then
-					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-				else
+				local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+				if newReqUri then
+					local reqUriNoneArgs = newReqUri[1]
+					local args = newReqUri[2]
 					--删除cckey和keyexpire
-					args.cckey = nil
-					args.keyexpire = nil							
-					--删除reqUri参数
-					local newArgs = ''
-					local reqUriNoneArgs = ngx.re.match(ngx.var.request_uri, "(.*?)\\?")[1]
-					for key, value in pairs(args) do  
-						newArgs = table.concat({newArgs,key,"=",value,"&"})
-					end							
-
-					if self:tlen(args) == 0 then
+					local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+					if newArgs == "" then
 						newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
 					else
-						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"cckey=",key_new,"&keyexpire=",expire})		
-					end
+						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+					end					
+				else
+					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
 				end
 
 				--验证失败次数加1
@@ -146,10 +132,12 @@ function Guard:redirectModules(ip,reqUri)
 				return ngx.redirect(newUrl, 302) --发送302转向						
 			end
 		else
-			local ccKeyValue = args["cckey"] --获取url中的cckey参数
-			local expire = args['keyexpire'] --获取过期时间
+			local ccKeyValue = ngx.re.match(reqUri, "cckey=([^&]+)","i")
+			local expire = ngx.re.match(reqUri, "keyexpire=([^&]+)","i")
 
 			if ccKeyValue and expire then
+				local ccKeyValue = ccKeyValue[1]
+				local expire = expire[1]
 				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 				local key_make = string.sub(key_make,"1","10")
 				self:debug("ccKeyValue "..ccKeyValue)
@@ -184,24 +172,20 @@ function Guard:redirectModules(ip,reqUri)
 					end												
 					--定义转向的url
 					local newUrl = ''
-					if self:tlen(args) == 0 then
-						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-					else
+					local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+					if newReqUri then
+						local reqUriNoneArgs = newReqUri[1]
+						local args = newReqUri[2]
 						--删除cckey和keyexpire
-						args.cckey = nil
-						args.keyexpire = nil							
-						--删除reqUri参数
-						local newArgs = ''
-						local reqUriNoneArgs = ngx.re.match(ngx.var.request_uri, "(.*?)\\?")[1]
-						for key, value in pairs(args) do  
-							newArgs = table.concat({newArgs,key,"=",value,"&"})
-						end							
-
-						if self:tlen(args) == 0 then
+						local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+						if newArgs == "" then
 							newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
 						else
-							newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"cckey=",key_new,"&keyexpire=",expire})				
-						end
+							newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+						end					
+					else
+						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
 					end
 
 					return ngx.redirect(newUrl, 302) --发送302转向
@@ -223,27 +207,23 @@ function Guard:redirectModules(ip,reqUri)
 								
 				--定义转向的url
 				local newUrl = ''
-				if self:tlen(args) == 0 then
-					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-				else
+				local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+				if newReqUri then
+					local reqUriNoneArgs = newReqUri[1]
+					local args = newReqUri[2]
 					--删除cckey和keyexpire
-					args.cckey = nil
-					args.keyexpire = nil							
-					--删除reqUri参数
-					local newArgs = ''
-					local reqUriNoneArgs = ngx.re.match(ngx.var.request_uri, "(.*?)\\?")[1]
-					for key, value in pairs(args) do  
-						newArgs = table.concat({newArgs,key,"=",value,"&"})
-					end							
-
-					if self:tlen(args) == 0 then
+					local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+					if newArgs == "" then
 						newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
 					else
-						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"cckey=",key_new,"&keyexpire=",expire})				
-					end
+						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+					end					
+				else
+					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
 				end
 
-				return ngx.redirect(newUrl, 302) --发送302转向			
+				return ngx.redirect(newUrl, 302) --发送302转向
 			end	
 		end
 	end
@@ -257,7 +237,6 @@ function Guard:JsJumpModules(ip,reqUri)
 		local cookie_key = ngx.var["cookie_keyjs"] --获取cookie密钥
 		local cookie_expire = ngx.var["cookie_expirejs"] --获取cookie密钥过期时间
 		local now = ngx.time() --当前时间戳
-		local args = ngx.req.get_uri_args()
 		local challengeTimesKey = table.concat({ip,"challenge"})
 		local challengeTimesValue = _Conf.dict:get(challengeTimesKey)
 		local blackKey = ip.."black"
@@ -289,24 +268,20 @@ function Guard:JsJumpModules(ip,reqUri)
 
 				--定义转向的url
 				local newUrl = ''
-				if self:tlen(args) == 0 then
-					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-				else
+				local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+				if newReqUri then
+					local reqUriNoneArgs = newReqUri[1]
+					local args = newReqUri[2]
 					--删除cckey和keyexpire
-					args.cckey = nil
-					args.keyexpire = nil							
-					--删除reqUri参数
-					local newArgs = ''
-					local reqUriNoneArgs = ngx.re.match(ngx.var.request_uri, "(.*?)\\?")[1]
-					for key, value in pairs(args) do  
-						newArgs = table.concat({newArgs,key,"=",value,"&"})
-					end							
-
-					if self:tlen(args) == 0 then
+					local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+					if newArgs == "" then
 						newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
 					else
-						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"cckey=",key_new,"&keyexpire=",expire})		
-					end
+						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+					end					
+				else
+					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
 				end
 
 				local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
@@ -317,10 +292,13 @@ function Guard:JsJumpModules(ip,reqUri)
 				ngx.exit(200)					
 			end
 		else
-			local ccKeyValue = args["cckey"] --获取url中的cckey参数
-			local expire = args['keyexpire'] --获取过期时间
+			local ccKeyValue = ngx.re.match(reqUri, "cckey=([^&]+)","i")
+			local expire = ngx.re.match(reqUri, "keyexpire=([^&]+)","i")
 
 			if ccKeyValue and expire then
+				local ccKeyValue = ccKeyValue[1]
+				local expire = expire[1]
+
 				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 				local key_make = string.sub(key_make,"1","10")
 
@@ -348,24 +326,20 @@ function Guard:JsJumpModules(ip,reqUri)
 					local key_new = string.sub(key_new,"1","10")				
 					--定义转向的url
 					local newUrl = ''
-					if self:tlen(args) == 0 then
-						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-					else
+					local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+					if newReqUri then
+						local reqUriNoneArgs = newReqUri[1]
+						local args = newReqUri[2]
 						--删除cckey和keyexpire
-						args.cckey = nil
-						args.keyexpire = nil							
-						--删除reqUri参数
-						local newArgs = ''
-						local reqUriNoneArgs = ngx.re.match(ngx.var.request_uri, "(.*?)\\?")[1]
-						for key, value in pairs(args) do  
-							newArgs = table.concat({newArgs,key,"=",value,"&"})
-						end							
-
-						if self:tlen(args) == 0 then
+						local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+						if newArgs == "" then
 							newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
 						else
-							newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"cckey=",key_new,"&keyexpire=",expire})		
-						end
+							newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+						end					
+					else
+						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
 					end
 					local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
 					ngx.header.content_type = "text/html"
@@ -390,24 +364,20 @@ function Guard:JsJumpModules(ip,reqUri)
 								
 				--定义转向的url
 				local newUrl = ''
-				if self:tlen(args) == 0 then
-					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-				else
+				local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+				if newReqUri then
+					local reqUriNoneArgs = newReqUri[1]
+					local args = newReqUri[2]
 					--删除cckey和keyexpire
-					args.cckey = nil
-					args.keyexpire = nil							
-					--删除reqUri参数
-					local newArgs = ''
-					local reqUriNoneArgs = ngx.re.match(ngx.var.request_uri, "(.*?)\\?")[1]
-					for key, value in pairs(args) do  
-						newArgs = table.concat({newArgs,key,"=",value,"&"})
-					end							
-
-					if self:tlen(args) == 0 then
+					local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+					if newArgs == "" then
 						newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
 					else
-						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"cckey=",key_new,"&keyexpire=",expire})		
-					end
+						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+					end					
+				else
+					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
 				end
 
 				local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
