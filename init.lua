@@ -143,8 +143,8 @@ _Conf = {
 	uriMode = urlMode1(Config.urlMatchMode),
 	requestUriMode = urlMode2(Config.urlMatchMode),
 
-	nomalTimes = 0,
-	exceedTimes = 0,
+	normalCount = 0,
+	exceedCount = 0,
 
 }
 

@@ -13,7 +13,7 @@ local Config = {
 	JsJumpModules = { state = "Off" ,verifyMaxFail = 3, amongTime = 60 , urlProtect = baseDir.."url-protect/js.txt"},
 
 	--自动开启防御
-	autoEnable = { state = "off", protectPort = "80", maxConnection = 1000, ssCommand = "/usr/sbin/ss" ,enableModule = "redirectModules"},
+	autoEnable = { state = "off", protectPort = "80", interval = 30, normalTimes = 3,exceedTimes = 2,maxConnection = 1000, ssCommand = "/usr/sbin/ss" ,enableModule = "redirectModules"},
 
 	--key值
 	keySecret = '948gkj3jdls',
