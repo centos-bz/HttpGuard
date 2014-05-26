@@ -110,11 +110,11 @@ _Conf = {
 
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
-	redirectModulesIsOn = optionIsOn(Config.redirectModules.state),
-	JsJumpModulesIsOn = optionIsOn(Config.JsJumpModules.state),
 	whiteIpModulesIsOn = optionIsOn(Config.whiteIpModules.state),
 	realIpFromHeaderIsOn = optionIsOn(Config.realIpFromHeader.state),
 	autoEnableIsOn = optionIsOn(Config.autoEnable.state),
+	redirectModulesIsOn = optionIsOn(Config.redirectModules.state),
+	JsJumpModulesIsOn = optionIsOn(Config.JsJumpModules.state),
 
 	--解析文件到正则
 	redirectUrlProtect = parseRuleFile(Config.redirectModules.urlProtect),
@@ -150,3 +150,21 @@ _Conf = {
 
 --读取验证码到字典
 readCaptcha2Dict(_Conf.captchaDir,_Conf.dict_captcha)
+
+--设置词典计数及开关状态
+if _Conf.redirectModulesIsOn then
+	_Conf.dict_captcha:set("redirectOn",1)
+else
+	_Conf.dict_captcha:set("redirectOn",0)
+end
+
+if _Conf.JsJumpModulesIsOn then
+	_Conf.dict_captcha:set("jsOn",1)
+else
+	_Conf.dict_captcha:set("jsOn",0)
+end
+
+if _Conf.autoEnableIsOn then
+	_Conf.dict_captcha:set("normalCount",0)
+	_Conf.dict_captcha:set("exceedCount",0)
+end	
