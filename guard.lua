@@ -81,7 +81,7 @@ function Guard:limitReqModules(ip,reqUri,uri)
 		if newReqTimes > _Conf.limitReqModules.maxReqs then --判断是否请求数大于阀值
 			self:debug("ip "..ip.. " request exceed ".._Conf.limitReqModules.maxReqs,ip,reqUri)
 			_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
-			self:log("Warning:IP "..ip.." visit "..newReqTimes.." times,block it.")
+			self:log("IP "..ip.." visit "..newReqTimes.." times,block it.")
 		end
 
 	end
