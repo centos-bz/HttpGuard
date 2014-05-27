@@ -49,6 +49,9 @@ local Config = {
 	captchaDir = baseDir.."captcha/",
 	--是否开启debug日志
 	debug = false,
+
+	--日志目录
+	logPath = baseDir.."logs/",
 }
 
 return Config

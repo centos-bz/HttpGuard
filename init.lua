@@ -103,6 +103,7 @@ _Conf = {
 	realIpFromHeader = Config.realIpFromHeader,
 	autoEnable = Config.autoEnable,
 	debug = Config.debug,
+	logPath = Config.logPath,
 	blockTime = Config.blockTime,
 	keySecret = Config.keySecret,
 	keyExpire = Config.keyExpire,

@@ -1,10 +1,23 @@
 local Guard = {}
 
 --debug日志
-function Guard:debug(data)
+function Guard:debug(data,ip,reqUri)
 	if _Conf.debug then
-		ngx.log(ngx.ERR,data)
+		local date = os.date("%Y-%m-%d")
+		local filename = _Conf.logPath.."/debug-"..date..".log"
+		local file = io.open(filename,"a+")
+		file:write(os.date('%Y-%m-%d %H:%M:%S').." [DEBUG] "..data.." IP "..ip.." GET "..reqUri.."\n")
+		file:close()
 	end
+end
+
+--攻击日志
+function Guard:log(data)
+	local date = os.date("%Y-%m-%d")
+	local filename = _Conf.logPath.."/attack-"..date..".log"
+	local file = io.open(filename,"a+")
+	file:write(os.date('%Y-%m-%d %H:%M:%S').." [WARNING] "..data.."\n")
+	file:close()	
 end
 
 --获取真实ip
@@ -12,7 +25,7 @@ function Guard:getRealIp(remoteIp,headers)
 	if _Conf.realIpFromHeaderIsOn then
 		readIp = headers[_Conf.realIpFromHeader.header]
 		if readIp then
-			self:debug("realIpFromHeader is on.return ip "..readIp)
+			self:debug("realIpFromHeader is on.return ip "..readIp,remoteIp,"")
 			return headers[_Conf.realIpFromHeader.header]
 		else
 			return remoteIp
@@ -25,10 +38,10 @@ end
 --白名单模块
 function Guard:ipInWhiteList(ip)
 	if _Conf.whiteIpModulesIsOn then --判断是否开启白名单模块
-		self:debug("whiteIpModules is on.")
+		self:debug("whiteIpModules is on.",ip,"")
 
 		if ngx.re.match(ip, _Conf.whiteIpList) then --匹配白名单列表
-			self:debug("ip "..ip.. " match white list ".._Conf.whiteIpList)
+			self:debug("ip "..ip.. " match white list ".._Conf.whiteIpList,ip,"")
 			return true
 		else
 			return false
@@ -40,7 +53,7 @@ end
 function Guard:blackListModules(ip,reqUri)
 	local blackKey = ip.."black"
 	if _Conf.dict:get(blackKey) then --判断ip是否存在黑名单字典
-		self:debug("ip "..ip.." in blacklist")
+		self:debug("ip "..ip.." in blacklist",ip,reqUri)
 		self:takeAction(ip,reqUri) --存在则执行相应动作
 	end	
 end
@@ -48,7 +61,7 @@ end
 --限制请求速率模块
 function Guard:limitReqModules(ip,reqUri,uri)
 	if _Conf.limitReqModulesIsOn then --limitReq模块是否开启
-		self:debug("limitReqModules is on.")	
+		self:debug("limitReqModules is on.",ip,reqUri)	
 		local blackKey = ip.."black"
 		local limitReqKey = ip.."limitreqkey" --定义limitreq key
 		local reqTimes = _Conf.dict:get(limitReqKey) --获取此ip请求的次数
@@ -62,13 +75,13 @@ function Guard:limitReqModules(ip,reqUri,uri)
 		end
 
 		local newReqTimes  = reqTimes + 1
-		self:debug("newReqTimes "..newReqTimes)
+		self:debug("newReqTimes "..newReqTimes,ip,reqUri)
 
 		--判断请求数是否大于阀值,大于则添加黑名单
 		if newReqTimes > _Conf.limitReqModules.maxReqs then --判断是否请求数大于阀值
-			self:debug("ip "..ip.. " request exceed ".._Conf.limitReqModules.maxReqs)
+			self:debug("ip "..ip.. " request exceed ".._Conf.limitReqModules.maxReqs,ip,reqUri)
 			_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
-			ngx.log(ngx.ERR,"Warning:IP "..ip.." visit "..newReqTimes.." times,block it.")
+			self:log("Warning:IP "..ip.." visit "..newReqTimes.." times,block it.")
 		end
 
 	end
@@ -78,7 +91,7 @@ end
 function Guard:redirectModules(ip,reqUri)
 	local redirectOn = _Conf.dict_captcha:get("redirectOn")
 	if redirectOn == 1 then --判断转向模块是否开启
-		self:debug("redirectModules is on.")
+		self:debug("redirectModules is on.",ip,reqUri)
 		local cookie_key = ngx.var["cookie_key302"] --获取cookie密钥
 		local cookie_expire = ngx.var["cookie_expire302"] --获取cookie密钥过期时间
 		local now = ngx.time() --当前时间戳
@@ -90,13 +103,13 @@ function Guard:redirectModules(ip,reqUri)
 			local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,cookie_expire}))
 			local key_make = string.sub(key_make,"1","10")
 			if tonumber(cookie_expire) > now and cookie_key == key_make then
-				self:debug("cookie key is valid.")
+				self:debug("cookie key is valid.",ip,reqUri)
 				if challengeTimesValue then
 					_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
 				end	
 				return
 			else
-				self:debug("ip "..ip.." cookie key is invalid.")
+				self:debug("ip "..ip.." cookie key is invalid.",ip,reqUri)
 				local expire = now + _Conf.keyExpire
 				local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 				local key_new = string.sub(key_new,"1","10")					
@@ -141,12 +154,12 @@ function Guard:redirectModules(ip,reqUri)
 				local expire = expire[1]
 				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 				local key_make = string.sub(key_make,"1","10")
-				self:debug("ccKeyValue "..ccKeyValue)
-				self:debug("expire "..expire)
-				self:debug("key_make "..key_make)
-				self:debug("ccKeyValue "..ccKeyValue)
+				self:debug("ccKeyValue "..ccKeyValue,ip,reqUri)
+				self:debug("expire "..expire,ip,reqUri)
+				self:debug("key_make "..key_make,ip,reqUri)
+				self:debug("ccKeyValue "..ccKeyValue,ip,reqUri)
 				if key_make == ccKeyValue and now < tonumber(expire) then--判断传过来的cckey参数值是否等于字典记录的值,且没有过期
-					self:debug("ip "..ip.." arg cckey "..ccKeyValue.." is valid.set valid cookie.")
+					self:debug("ip "..ip.." arg cckey "..ccKeyValue.." is valid.set valid cookie.",ip,reqUri)
 					local expire = now + _Conf.keyExpire
 					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 					local key_new = string.sub(key_new,"1","10")
@@ -157,7 +170,7 @@ function Guard:redirectModules(ip,reqUri)
 					ngx.header['Set-Cookie'] = {"key302="..key_new.."; path=/", "expire302="..expire.."; path=/"}
 					return
 				else --如果不相等，则再发送302转向
-					self:debug("ip "..ip.." arg cckey is invalid.")
+					self:debug("ip "..ip.." arg cckey is invalid.",ip,reqUri)
 					local expire = now + _Conf.keyExpire
 					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 					local key_new = string.sub(key_new,"1","10")
@@ -234,7 +247,7 @@ end
 function Guard:JsJumpModules(ip,reqUri)
 	local jsOn = _Conf.dict_captcha:get("jsOn")
 	if jsOn == 1 then --判断js跳转模块是否开启
-		self:debug("JsJumpModules is on.")
+		self:debug("JsJumpModules is on.",ip,reqUri)
 		local cookie_key = ngx.var["cookie_keyjs"] --获取cookie密钥
 		local cookie_expire = ngx.var["cookie_expirejs"] --获取cookie密钥过期时间
 		local now = ngx.time() --当前时间戳
@@ -249,7 +262,7 @@ function Guard:JsJumpModules(ip,reqUri)
 				if challengeTimesValue then
 					_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
 				end					
-				self:debug("cookie key is valid.")
+				self:debug("cookie key is valid.",ip,reqUri)
 				return
 			else
 				--验证失败次数加1
@@ -262,7 +275,7 @@ function Guard:JsJumpModules(ip,reqUri)
 					_Conf.dict:set(challengeTimesKey,1,_Conf.JsJumpModules.amongTime)
 				end
 				
-				self:debug("ip "..ip.." cookie key is invalid.")
+				self:debug("ip "..ip.." cookie key is invalid.",ip,reqUri)
 				local expire = now + _Conf.keyExpire
 				local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 				local key_new = string.sub(key_new,"1","10")
@@ -304,7 +317,7 @@ function Guard:JsJumpModules(ip,reqUri)
 				local key_make = string.sub(key_make,"1","10")
 
 				if key_make == ccKeyValue and now < tonumber(expire) then--判断传过来的cckey参数值是否等于字典记录的值,且没有过期
-					self:debug("ip "..ip.." arg cckey "..ccKeyValue.." is valid.set valid cookie.")
+					self:debug("ip "..ip.." arg cckey "..ccKeyValue.." is valid.set valid cookie.",ip,reqUri)
 					if challengeTimesValue then
 						_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
 					end							
@@ -321,7 +334,7 @@ function Guard:JsJumpModules(ip,reqUri)
 						_Conf.dict:set(challengeTimesKey,1,_Conf.JsJumpModules.amongTime)
 					end	
 					
-					self:debug("ip "..ip.." arg cckey is invalid.")
+					self:debug("ip "..ip.." arg cckey is invalid.",ip,reqUri)
 					local expire = now + _Conf.keyExpire
 					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 					local key_new = string.sub(key_new,"1","10")				
@@ -394,9 +407,9 @@ end
 function Guard:getCaptcha()
 	math.randomseed(ngx.now()) --随机种子
 	local random = math.random(1,10000) --生成1-10000之前的随机数
-	self:debug("get random num "..random)
+	self:debug("get random num "..random,"","")
 	local captchaValue = _Conf.dict_captcha:get(random) --取得字典中的验证码
-	self:debug("get captchaValue "..captchaValue)
+	self:debug("get captchaValue "..captchaValue,"","")
 	local captchaImg = _Conf.dict_captcha:get(captchaValue) --取得验证码对应的图片
 	--返回图片
 	ngx.header.content_type = "image/jpeg"
@@ -410,26 +423,26 @@ function Guard:verifyCaptcha(ip)
 	ngx.req.read_body()
 	local captchaNum = ngx.var["cookie_captchaNum"] --获取cookie captchaNum值
 	local preurl = ngx.var["cookie_preurl"] --获取上次访问url
-	self:debug("get cookie captchaNum "..captchaNum)
+	self:debug("get cookie captchaNum "..captchaNum,ip,"")
 	local args = ngx.req.get_post_args() --获取post参数
 	local postValue = args["response"] --获取post value参数
 	postValue = string.lower(postValue)
-	self:debug("get post arg response "..postValue)
+	self:debug("get post arg response "..postValue,ip,"")
 	local captchaValue = _Conf.dict_captcha:get(captchaNum) --从字典获取post value对应的验证码值
 	if captchaValue == postValue then --比较验证码是否相等
-		self:debug("captcha is valid.delete from blacklist")
+		self:debug("captcha is valid.delete from blacklist",ip,"")
 		_Conf.dict:delete(ip.."black") --从黑名单删除
 		_Conf.dict:delete(ip.."limitreqkey") --访问记录删除
 		local expire = ngx.time() + _Conf.keyExpire
 		local captchaKey = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
 		local captchaKey = string.sub(captchaKey,"1","10")
-		self:debug("expire "..expire)
-		self:debug("captchaKey "..captchaKey)	
+		self:debug("expire "..expire,ip,"")
+		self:debug("captchaKey "..captchaKey,ip,"")	
 		ngx.header['Set-Cookie'] = {"captchaKey="..captchaKey.."; path=/", "captchaExpire="..expire.."; path=/"}
 		return ngx.redirect(preurl) --返回上次访问url
 	else
 		--重新发送验证码页面
-		self:debug("captcha invalid")
+		self:debug("captcha invalid",ip,"")
 		ngx.header.content_type = "text/html"
 		ngx.print(_Conf.reCaptchaPage)
 		ngx.exit(200)
@@ -468,23 +481,23 @@ function Guard:takeAction(ip,reqUri)
 			local now = ngx.time()
 			local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,cookie_expire}))
 			local key_make = string.sub(key_make,"1","10")
-			self:debug("cookie_expire "..cookie_expire)
-			self:debug("cookie_key "..cookie_key)
-			self:debug("now "..now)
-			self:debug("key_make "..key_make)
+			self:debug("cookie_expire "..cookie_expire,ip,reqUri)
+			self:debug("cookie_key "..cookie_key,ip,reqUri)
+			self:debug("now "..now,ip,reqUri)
+			self:debug("key_make "..key_make,ip,reqUri)
 			if tonumber(cookie_expire) > now and cookie_key == key_make then
-				self:debug("cookie key is valid.")
+				self:debug("cookie key is valid.",ip,reqUri)
 				return
 			else
-				self:debug("cookie key is invalid")
+				self:debug("cookie key is invalid",ip,reqUri)
 				self:captchaAction(reqUri)
 			end	
 		else	
-			self:debug("return captchaAction")
+			self:debug("return captchaAction",ip,reqUri)
 			self:captchaAction(reqUri)
 		end	
 	elseif _Conf.forbiddenAction then
-		self:debug("return forbiddenAction")
+		self:debug("return forbiddenAction",ip,reqUri)
 		self:forbiddenAction()
 
 	elseif _Conf.iptablesAction then
@@ -505,7 +518,7 @@ function Guard:autoSwitch()
 		local f=io.popen(_Conf.autoEnable.ssCommand.." -tan state established '( sport = :".._Conf.autoEnable.protectPort.." )' | wc -l")
 		local result=f:read("*all")
 		local connection=tonumber(result)
-		Guard:debug("current connection for port ".._Conf.autoEnable.protectPort.." is "..connection)
+		Guard:debug("current connection for port ".._Conf.autoEnable.protectPort.." is "..connection,"","")
 		if _Conf.autoEnable.enableModule == "redirectModules" then
 			local redirectOn = _Conf.dict_captcha:get("redirectOn")
 			if redirectOn == 1 then
@@ -518,7 +531,7 @@ function Guard:autoSwitch()
 				--如果正常次数大于_Conf.autoEnable.normalTimes,关闭redirectModules
 				local normalCount = _Conf.dict_captcha:get("normalCount")
 				if normalCount > _Conf.autoEnable.normalTimes then
-					ngx.log(ngx.ERR,"turn redirectModules off.")
+					self:log("turn redirectModules off.")
 					_Conf.dict_captcha:set("redirectOn",0)
 				end	
 			else
@@ -531,7 +544,7 @@ function Guard:autoSwitch()
 				--如果超限次数大于_Conf.autoEnable.exceedTimes,开启redirectModules
 				local exceedCount = _Conf.dict_captcha:get("exceedCount")
 				if exceedCount > _Conf.autoEnable.exceedTimes then
-					ngx.log(ngx.ERR,"turn redirectModules on.")
+					self:log("turn redirectModules on.")
 					_Conf.dict_captcha:set("redirectOn",1)
 				end					
 			end
@@ -548,7 +561,7 @@ function Guard:autoSwitch()
 				--如果正常次数大于_Conf.autoEnable.normalTimes,关闭JsJumpModules
 				local normalCount = _Conf.dict_captcha:get("normalCount")
 				if normalCount > _Conf.autoEnable.normalTimes then
-					ngx.log(ngx.ERR,"turn JsJumpModules off.")
+					self:log("turn JsJumpModules off.")
 					_Conf.dict_captcha:set("jsOn",0)
 				end	
 			else
@@ -561,7 +574,7 @@ function Guard:autoSwitch()
 				--如果超限次数大于_Conf.autoEnable.exceedTimes,开启JsJumpModules
 				local exceedCount = _Conf.dict_captcha:get("exceedCount")
 				if exceedCount > _Conf.autoEnable.exceedTimes then
-					ngx.log(ngx.ERR,"turn JsJumpModules on.")
+					self:log("turn JsJumpModules on.")
 					_Conf.dict_captcha:set("jsOn",1)
 				end					
 			end
