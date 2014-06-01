@@ -531,7 +531,7 @@ function Guard:autoSwitch()
 				--如果正常次数大于_Conf.autoEnable.normalTimes,关闭redirectModules
 				local normalCount = _Conf.dict_captcha:get("normalCount")
 				if normalCount > _Conf.autoEnable.normalTimes then
-					self:log("turn redirectModules off.")
+					Guard:log("turn redirectModules off.")
 					_Conf.dict_captcha:set("redirectOn",0)
 				end	
 			else
@@ -544,7 +544,7 @@ function Guard:autoSwitch()
 				--如果超限次数大于_Conf.autoEnable.exceedTimes,开启redirectModules
 				local exceedCount = _Conf.dict_captcha:get("exceedCount")
 				if exceedCount > _Conf.autoEnable.exceedTimes then
-					self:log("turn redirectModules on.")
+					Guard:log("turn redirectModules on.")
 					_Conf.dict_captcha:set("redirectOn",1)
 				end					
 			end
@@ -561,7 +561,7 @@ function Guard:autoSwitch()
 				--如果正常次数大于_Conf.autoEnable.normalTimes,关闭JsJumpModules
 				local normalCount = _Conf.dict_captcha:get("normalCount")
 				if normalCount > _Conf.autoEnable.normalTimes then
-					self:log("turn JsJumpModules off.")
+					Guard:log("turn JsJumpModules off.")
 					_Conf.dict_captcha:set("jsOn",0)
 				end	
 			else
@@ -574,7 +574,7 @@ function Guard:autoSwitch()
 				--如果超限次数大于_Conf.autoEnable.exceedTimes,开启JsJumpModules
 				local exceedCount = _Conf.dict_captcha:get("exceedCount")
 				if exceedCount > _Conf.autoEnable.exceedTimes then
-					self:log("turn JsJumpModules on.")
+					Guard:log("turn JsJumpModules on.")
 					_Conf.dict_captcha:set("jsOn",1)
 				end					
 			end
