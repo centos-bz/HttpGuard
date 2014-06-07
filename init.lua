@@ -108,6 +108,7 @@ _Conf = {
 	keySecret = Config.keySecret,
 	keyExpire = Config.keyExpire,
 	sudoPass = Config.sudoPass,
+	whiteTime = Config.whiteTime,
 
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),

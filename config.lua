@@ -7,13 +7,13 @@ local Config = {
 	limitReqModules = { state = "On" , maxReqs = 50 ,amongTime = 10, urlProtect = baseDir.."url-protect/limit.txt" },
 
 	--主动防御,发送302跳转识别
-	redirectModules = { state = "Off" ,verifyMaxFail = 3, amongTime = 60 ,urlProtect = baseDir.."url-protect/302.txt"},
+	redirectModules = { state = "Off" ,verifyMaxFail = 5, amongTime = 60 ,urlProtect = baseDir.."url-protect/302.txt"},
 
 	--主动防御,发送js跳转代码
-	JsJumpModules = { state = "Off" ,verifyMaxFail = 3, amongTime = 60 , urlProtect = baseDir.."url-protect/js.txt"},
+	JsJumpModules = { state = "Off" ,verifyMaxFail = 5, amongTime = 60 , urlProtect = baseDir.."url-protect/js.txt"},
 
 	--自动开启防御
-	autoEnable = { state = "off", protectPort = "80", interval = 30, normalTimes = 3,exceedTimes = 2,maxConnection = 1000, ssCommand = "/usr/sbin/ss" ,enableModule = "redirectModules"},
+	autoEnable = { state = "off", protectPort = "80", interval = 30, normalTimes = 3,exceedTimes = 2,maxConnection = 500, ssCommand = "/usr/sbin/ss" ,enableModule = "redirectModules"},
 
 	--key值
 	keySecret = '948gkj3jdls',
@@ -23,6 +23,9 @@ local Config = {
 
 	--黑名单时间
 	blockTime = 600,
+
+	--JsJumpModules redirectModules验证通过后,ip在白名单的时间
+	whiteTime = 600,
 
 	--key过期时间
 	keyExpire = 600,

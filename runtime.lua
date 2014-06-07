@@ -37,19 +37,19 @@ else
 
 		--限制请求速率模块
 		if ngx.re.match(address,_Conf.limitUrlProtect,"i") then
-			Guard:debug("address "..address.." match reg ".._Conf.limitUrlProtect,ip,reqUri)
+			Guard:debug("[limitReqModules] address "..address.." match reg ".._Conf.limitUrlProtect,ip,reqUri)
 			Guard:limitReqModules(ip,reqUri)
 		end
 
 		--302转向模块
 		if ngx.re.match(address,_Conf.redirectUrlProtect,"i") then
-			Guard:debug("address "..address.." match reg ".._Conf.redirectUrlProtect,ip,reqUri)
+			Guard:debug("[redirectModules] address "..address.." match reg ".._Conf.redirectUrlProtect,ip,reqUri)
 			Guard:redirectModules(ip,reqUri)
 		end	
 
 		--js跳转模块
 		if ngx.re.match(address,_Conf.JsJumpUrlProtect,"i") then
-			Guard:debug("address "..address.." match reg ".._Conf.JsJumpUrlProtect,ip,reqUri)
+			Guard:debug("[JsJumpModules] address "..address.." match reg ".._Conf.JsJumpUrlProtect,ip,reqUri)
 			Guard:JsJumpModules(ip,reqUri)
 		end
 			
