@@ -103,42 +103,133 @@ function Guard:redirectModules(ip,reqUri)
 			self:debug("[redirectModules] in white ip list",ip,reqUri)
 			return
 		else
-			local ccKeyValue = ngx.re.match(reqUri, "cckey=([^&]+)","i")
-			local expire = ngx.re.match(reqUri, "keyexpire=([^&]+)","i")
-
-			if ccKeyValue and expire then --是否有cckey和keyexpire参数
-				local ccKeyValue = ccKeyValue[1]
-				local expire = expire[1]
-				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+			--如果不在白名单,再检测是否有cookie凭证
+			local cookie_key = ngx.var["cookie_key302"] --获取cookie密钥
+			local cookie_expire = ngx.var["cookie_expire302"] --获取cookie密钥过期时间
+			if cookie_key and cookie_expire then
+				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,cookie_expire}))
 				local key_make = string.sub(key_make,"1","10")
-				self:debug("[redirectModules] ccKeyValue "..ccKeyValue,ip,reqUri)
-				self:debug("[redirectModules] expire "..expire,ip,reqUri)
-				self:debug("[redirectModules] key_make "..key_make,ip,reqUri)
-				self:debug("[redirectModules] ccKeyValue "..ccKeyValue,ip,reqUri)
-				if key_make == ccKeyValue and now < tonumber(expire) then--判断传过来的cckey参数值是否等于字典记录的值,且没有过期
-					self:debug("[redirectModules] ip "..ip.." arg cckey "..ccKeyValue.." is valid.add ip to write list.",ip,reqUri)
-
+				--判断cookie是否有效
+				if tonumber(cookie_expire) > now and cookie_key == key_make then
+					self:debug("[redirectModules] cookie key is valid.",ip,reqUri)
 					if challengeTimesValue then
 						_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
-					end								
+					end
 					_Conf.dict:set(whiteKey,0,_Conf.whiteTime) --添加到白名单
 					return
-				else --如果不相等，则再发送302转向
-					self:debug("[redirectModules] ip "..ip.." arg cckey is invalid.",ip,reqUri)
+				else
+					self:debug("[redirectModules] cookie key is invalid.",ip,reqUri)
 					local expire = now + _Conf.keyExpire
 					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
-					local key_new = string.sub(key_new,"1","10")
+					local key_new = string.sub(key_new,"1","10")					
+					--定义转向的url
+					local newUrl = ''
+					local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+					if newReqUri then
+						local reqUriNoneArgs = newReqUri[1]
+						local args = newReqUri[2]
+						--删除cckey和keyexpire
+						local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+						if newArgs == "" then
+							newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
+						else
+							newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+						end					
+					else
+						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
+					end
 
 					--验证失败次数加1
 					if challengeTimesValue then
 						_Conf.dict:incr(challengeTimesKey,1)
-						if challengeTimesValue + 1 > _Conf.redirectModules.verifyMaxFail then
+						if challengeTimesValue + 1> _Conf.redirectModules.verifyMaxFail then
+							self:log("[redirectModules] client "..ip.." challenge cookie failed "..challengeTimesValue.." times,add to blacklist.")
+							_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
+						end	
+					else
+						_Conf.dict:set(challengeTimesKey,1,_Conf.redirectModules.amongTime)
+					end		
+
+					--删除cookie
+					ngx.header['Set-Cookie'] = {"key302=; path=/", "expire302=; expires=Sat, 01-Jan-2000 00:00:00 GMT; path=/"}
+					return ngx.redirect(newUrl, 302) --发送302转向						
+				end
+			else
+				--如果没有找到cookie,则检测是否带cckey参数
+				local ccKeyValue = ngx.re.match(reqUri, "cckey=([^&]+)","i")
+				local expire = ngx.re.match(reqUri, "keyexpire=([^&]+)","i")
+
+				if ccKeyValue and expire then --是否有cckey和keyexpire参数
+					local ccKeyValue = ccKeyValue[1]
+					local expire = expire[1]
+					local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+					local key_make = string.sub(key_make,"1","10")
+					self:debug("[redirectModules] ccKeyValue "..ccKeyValue,ip,reqUri)
+					self:debug("[redirectModules] expire "..expire,ip,reqUri)
+					self:debug("[redirectModules] key_make "..key_make,ip,reqUri)
+					self:debug("[redirectModules] ccKeyValue "..ccKeyValue,ip,reqUri)
+					if key_make == ccKeyValue and now < tonumber(expire) then--判断传过来的cckey参数值是否等于字典记录的值,且没有过期
+						self:debug("[redirectModules] ip "..ip.." arg cckey "..ccKeyValue.." is valid.add ip to write list.",ip,reqUri)
+
+						if challengeTimesValue then
+							_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
+						end								
+						_Conf.dict:set(whiteKey,0,_Conf.whiteTime) --添加到白名单
+						ngx.header['Set-Cookie'] = {"key302="..key_make.."; path=/", "expire302="..expire.."; path=/"} --发送cookie凭证
+						return
+					else --如果不相等，则再发送302转向
+						self:debug("[redirectModules] ip "..ip.." arg cckey is invalid.",ip,reqUri)
+						local expire = now + _Conf.keyExpire
+						local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+						local key_new = string.sub(key_new,"1","10")
+
+						--验证失败次数加1
+						if challengeTimesValue then
+							_Conf.dict:incr(challengeTimesKey,1)
+							if challengeTimesValue + 1 > _Conf.redirectModules.verifyMaxFail then
+								self:log("[redirectModules] client "..ip.." challenge 302key failed "..challengeTimesValue.." times,add to blacklist.")
+								_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
+							end	
+						else
+							_Conf.dict:set(challengeTimesKey,1,_Conf.redirectModules.amongTime)
+						end												
+						--定义转向的url
+						local newUrl = ''
+						local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+						if newReqUri then
+							local reqUriNoneArgs = newReqUri[1]
+							local args = newReqUri[2]
+							--删除cckey和keyexpire
+							local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+							if newArgs == "" then
+								newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
+							else
+								newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+							end					
+						else
+							newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
+						end
+
+						return ngx.redirect(newUrl, 302) --发送302转向
+					end
+				else
+					--验证失败次数加1
+					if challengeTimesValue then
+						_Conf.dict:incr(challengeTimesKey,1)
+						if challengeTimesValue +1 > _Conf.redirectModules.verifyMaxFail then
 							self:log("[redirectModules] client "..ip.." challenge 302key failed "..challengeTimesValue.." times,add to blacklist.")
 							_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
 						end	
 					else
 						_Conf.dict:set(challengeTimesKey,1,_Conf.redirectModules.amongTime)
-					end												
+					end
+
+					local expire = now + _Conf.keyExpire
+					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+					local key_new = string.sub(key_new,"1","10")	
+									
 					--定义转向的url
 					local newUrl = ''
 					local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
@@ -159,41 +250,6 @@ function Guard:redirectModules(ip,reqUri)
 
 					return ngx.redirect(newUrl, 302) --发送302转向
 				end
-			else
-				--验证失败次数加1
-				if challengeTimesValue then
-					_Conf.dict:incr(challengeTimesKey,1)
-					if challengeTimesValue +1 > _Conf.redirectModules.verifyMaxFail then
-						self:log("[redirectModules] client "..ip.." challenge 302key failed "..challengeTimesValue.." times,add to blacklist.")
-						_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
-					end	
-				else
-					_Conf.dict:set(challengeTimesKey,1,_Conf.redirectModules.amongTime)
-				end
-
-				local expire = now + _Conf.keyExpire
-				local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
-				local key_new = string.sub(key_new,"1","10")	
-								
-				--定义转向的url
-				local newUrl = ''
-				local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
-				if newReqUri then
-					local reqUriNoneArgs = newReqUri[1]
-					local args = newReqUri[2]
-					--删除cckey和keyexpire
-					local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
-					if newArgs == "" then
-						newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
-					else
-						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
-					end					
-				else
-					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-
-				end
-
-				return ngx.redirect(newUrl, 302) --发送302转向
 			end	
 		end
 	end
@@ -217,39 +273,37 @@ function Guard:JsJumpModules(ip,reqUri)
 			self:debug("[JsJumpModules] in white ip list",ip,reqUri)
 			return
 		else
-			local ccKeyValue = ngx.re.match(reqUri, "cckey=([^&]+)","i")
-			local expire = ngx.re.match(reqUri, "keyexpire=([^&]+)","i")
+			--如果不在白名单,检测是否有cookie凭证
+			local cookie_key = ngx.var["cookie_keyjs"] --获取cookie密钥
+			local cookie_expire = ngx.var["cookie_expirejs"] --获取cookie密钥过期时间
 
-			if ccKeyValue and expire then
-				local ccKeyValue = ccKeyValue[1]
-				local expire = expire[1]
-
-				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+			if cookie_key and cookie_expire then
+				local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,cookie_expire}))
 				local key_make = string.sub(key_make,"1","10")
-
-				if key_make == ccKeyValue and now < tonumber(expire) then--判断传过来的cckey参数值是否等于字典记录的值,且没有过期
-					self:debug("[JsJumpModules] ip "..ip.." arg cckey "..ccKeyValue.." is valid.add ip to white list.",ip,reqUri)
+				if tonumber(cookie_expire) > now and cookie_key == key_make then
 					if challengeTimesValue then
 						_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
-					end							
+					end					
+					self:debug("[JsJumpModules] cookie key is valid.",ip,reqUri)
 					_Conf.dict:set(whiteKey,0,_Conf.whiteTime) --添加ip到白名单
 					return
-				else --如果不相等，则再发送302转向
+				else
 					--验证失败次数加1
 					if challengeTimesValue then
 						_Conf.dict:incr(challengeTimesKey,1)
-						if challengeTimesValue + 1 > _Conf.JsJumpModules.verifyMaxFail then
-							self:log("[JsJumpModules] client "..ip.." challenge jskey failed "..challengeTimesValue.." times,add to blacklist.")
+						if challengeTimesValue +1 > _Conf.JsJumpModules.verifyMaxFail then
+							self:log("[JsJumpModules] client "..ip.." challenge cookie failed "..challengeTimesValue.." times,add to blacklist.")
 							_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
 						end	
 					else
 						_Conf.dict:set(challengeTimesKey,1,_Conf.JsJumpModules.amongTime)
-					end	
-					
-					self:debug("[JsJumpModules] ip "..ip.." arg cckey is invalid.",ip,reqUri)
+					end
+
+					self:debug("[JsJumpModules] cookie key is invalid.",ip,reqUri)
 					local expire = now + _Conf.keyExpire
 					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
-					local key_new = string.sub(key_new,"1","10")				
+					local key_new = string.sub(key_new,"1","10")
+
 					--定义转向的url
 					local newUrl = ''
 					local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
@@ -267,50 +321,112 @@ function Guard:JsJumpModules(ip,reqUri)
 						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
 
 					end
+
+					local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
+					ngx.header.content_type = "text/html"
+					--删除cookie
+					ngx.header['Set-Cookie'] = {"keyjs=; path=/", "expirejs=; expires=Sat, 01-Jan-2000 00:00:00 GMT; path=/"}						
+					ngx.print(jsJumpCode)
+					ngx.exit(200)					
+				end
+			else
+				--如果没有cookie凭证,检测url是否带有cckey参数
+				local ccKeyValue = ngx.re.match(reqUri, "cckey=([^&]+)","i")
+				local expire = ngx.re.match(reqUri, "keyexpire=([^&]+)","i")
+
+				if ccKeyValue and expire then
+					local ccKeyValue = ccKeyValue[1]
+					local expire = expire[1]
+
+					local key_make = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+					local key_make = string.sub(key_make,"1","10")
+
+					if key_make == ccKeyValue and now < tonumber(expire) then--判断传过来的cckey参数值是否等于字典记录的值,且没有过期
+						self:debug("[JsJumpModules] ip "..ip.." arg cckey "..ccKeyValue.." is valid.add ip to white list.",ip,reqUri)
+						if challengeTimesValue then
+							_Conf.dict:delete(challengeTimesKey) --删除验证失败计数器
+						end							
+						_Conf.dict:set(whiteKey,0,_Conf.whiteTime) --添加ip到白名单
+						ngx.header['Set-Cookie'] = {"keyjs="..key_make.."; path=/", "expirejs="..expire.."; path=/"} --发送cookie凭证
+						return
+					else --如果不相等，则再发送302转向
+						--验证失败次数加1
+						if challengeTimesValue then
+							_Conf.dict:incr(challengeTimesKey,1)
+							if challengeTimesValue + 1 > _Conf.JsJumpModules.verifyMaxFail then
+								self:log("[JsJumpModules] client "..ip.." challenge jskey failed "..challengeTimesValue.." times,add to blacklist.")
+								_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
+							end	
+						else
+							_Conf.dict:set(challengeTimesKey,1,_Conf.JsJumpModules.amongTime)
+						end	
+						
+						self:debug("[JsJumpModules] ip "..ip.." arg cckey is invalid.",ip,reqUri)
+						local expire = now + _Conf.keyExpire
+						local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+						local key_new = string.sub(key_new,"1","10")				
+						--定义转向的url
+						local newUrl = ''
+						local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+						if newReqUri then
+							local reqUriNoneArgs = newReqUri[1]
+							local args = newReqUri[2]
+							--删除cckey和keyexpire
+							local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+							if newArgs == "" then
+								newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
+							else
+								newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+							end					
+						else
+							newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
+						end
+						local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
+						ngx.header.content_type = "text/html"
+						ngx.print(jsJumpCode)
+						ngx.exit(200)
+					end
+				else
+					--验证失败次数加1
+					if challengeTimesValue then
+						_Conf.dict:incr(challengeTimesKey,1)
+						if challengeTimesValue + 1 > _Conf.JsJumpModules.verifyMaxFail then
+							self:log("[JsJumpModules] client "..ip.." challenge jskey failed "..challengeTimesValue.." times,add to blacklist.")
+							_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
+						end	
+					else
+						_Conf.dict:set(challengeTimesKey,1,_Conf.JsJumpModules.amongTime)
+					end
+					
+					--定义转向的url
+					local expire = now + _Conf.keyExpire
+					local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
+					local key_new = string.sub(key_new,"1","10")
+									
+					--定义转向的url
+					local newUrl = ''
+					local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
+					if newReqUri then
+						local reqUriNoneArgs = newReqUri[1]
+						local args = newReqUri[2]
+						--删除cckey和keyexpire
+						local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
+						if newArgs == "" then
+							newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
+						else
+							newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
+						end					
+					else
+						newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
+
+					end
+
 					local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
 					ngx.header.content_type = "text/html"
 					ngx.print(jsJumpCode)
-					ngx.exit(200)
+					ngx.exit(200)				
 				end
-			else
-				--验证失败次数加1
-				if challengeTimesValue then
-					_Conf.dict:incr(challengeTimesKey,1)
-					if challengeTimesValue + 1 > _Conf.JsJumpModules.verifyMaxFail then
-						self:log("[JsJumpModules] client "..ip.." challenge jskey failed "..challengeTimesValue.." times,add to blacklist.")
-						_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
-					end	
-				else
-					_Conf.dict:set(challengeTimesKey,1,_Conf.JsJumpModules.amongTime)
-				end
-				
-				--定义转向的url
-				local expire = now + _Conf.keyExpire
-				local key_new = ngx.md5(table.concat({ip,_Conf.keySecret,expire}))
-				local key_new = string.sub(key_new,"1","10")
-								
-				--定义转向的url
-				local newUrl = ''
-				local newReqUri = ngx.re.match(reqUri, "(.*?)\\?(.+)")
-				if newReqUri then
-					local reqUriNoneArgs = newReqUri[1]
-					local args = newReqUri[2]
-					--删除cckey和keyexpire
-					local newArgs = ngx.re.gsub(args, "[&?]?cckey=[^&]+&?|keyexpire=[^&]+&?", "", "i")
-					if newArgs == "" then
-						newUrl = table.concat({reqUriNoneArgs,"?cckey=",key_new,"&keyexpire=",expire})
-					else
-						newUrl = table.concat({reqUriNoneArgs,"?",newArgs,"&cckey=",key_new,"&keyexpire=",expire})
-					end					
-				else
-					newUrl = table.concat({reqUri,"?cckey=",key_new,"&keyexpire=",expire})
-
-				end
-
-				local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"}) --定义js跳转代码
-				ngx.header.content_type = "text/html"
-				ngx.print(jsJumpCode)
-				ngx.exit(200)				
 			end	
 		end
 	end
