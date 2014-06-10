@@ -681,7 +681,37 @@ function Guard:autoSwitch()
 					_Conf.dict_captcha:set("jsOn",1)
 				end					
 			end
-		end	
+
+		elseif 	_Conf.autoEnable.enableModule == "cookieModules" then
+			local cookieOn = _Conf.dict_captcha:get("cookieOn")
+			if cookieOn == 1 then
+				_Conf.dict_captcha:set("exceedCount",0) --超限次数清0
+				--如果当前连接在最大连接之下,为正常次数加1
+				if connection < _Conf.autoEnable.maxConnection then
+					_Conf.dict_captcha:incr("normalCount",1)
+				end
+
+				--如果正常次数大于_Conf.autoEnable.normalTimes,关闭cookieModules
+				local normalCount = _Conf.dict_captcha:get("normalCount")
+				if normalCount > _Conf.autoEnable.normalTimes then
+					Guard:log("[autoSwitch] turn cookieModules off.")
+					_Conf.dict_captcha:set("cookieOn",0)
+				end	
+			else
+				_Conf.dict_captcha:set("normalCount",0) --正常次数清0
+				--如果当前连接在最大连接之上,为超限次数加1
+				if connection > _Conf.autoEnable.maxConnection then
+					_Conf.dict_captcha:incr("exceedCount",1)
+				end
+
+				--如果超限次数大于_Conf.autoEnable.exceedTimes,开启cookieModules
+				local exceedCount = _Conf.dict_captcha:get("exceedCount")
+				if exceedCount > _Conf.autoEnable.exceedTimes then
+					Guard:log("[autoSwitch] turn cookieModules on.")
+					_Conf.dict_captcha:set("cookieOn",1)
+				end					
+			end			
+		end
 	end	
 end
 
