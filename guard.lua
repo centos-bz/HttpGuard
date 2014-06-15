@@ -618,7 +618,7 @@ end
 function Guard:autoSwitch()
 	if not _Conf.dict_captcha:get("monitor") then
 		_Conf.dict_captcha:set("monitor",0,_Conf.autoEnable.interval)
-		local f=io.popen(_Conf.autoEnable.ssCommand.." -tan state established '( sport = :".._Conf.autoEnable.protectPort.." )' | wc -l")
+		local f=io.popen(_Conf.autoEnable.ssCommand.." -tan state established '( sport = :".._Conf.autoEnable.protectPort.." or dport = :".._Conf.autoEnable.protectPort.." )' | wc -l")
 		local result=f:read("*all")
 		local connection=tonumber(result)
 		Guard:debug("[autoSwitch] current connection for port ".._Conf.autoEnable.protectPort.." is "..connection,"","")
