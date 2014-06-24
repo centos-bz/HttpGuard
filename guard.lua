@@ -566,15 +566,6 @@ function Guard:captchaAction(reqUri)
 	ngx.exit(200)
 end
 
---iptables动作
-function Guard:iptablesAction(reqUri)
-	ngx.header.content_type = "text/html"
-	ngx.header['Set-Cookie'] = table.concat({"preurl=",reqUri,"; path=/"})
-	ngx.print(_Conf.captchaPage)
-	ngx.exit(200)
-end
-
-
 --执行相应动作
 function Guard:takeAction(ip,reqUri)
 	if _Conf.captchaAction then
