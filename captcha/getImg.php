@@ -10,7 +10,7 @@ function getAuthImage($text) {
 	$buttum_c = ImageColorAllocate($im,$tmpC0,$tmpC1,$tmpC2);
 	imagefill($im, 16, 13, $buttum_c);
 
-	$font = '/data/www/waf/captcha/t1.ttf';
+	$font = __DIR__ . '/t1.ttf';
 
 	for ($i=0;$i<strlen($text);$i++)
 	{
