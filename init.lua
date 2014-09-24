@@ -139,6 +139,7 @@ _Conf = {
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
 	whiteIpModulesIsOn = optionIsOn(Config.whiteIpModules.state),
+	fileBlackIpModulesIsOn = optionIsOn(Config.blackIpModules.state)
 	realIpFromHeaderIsOn = optionIsOn(Config.realIpFromHeader.state),
 	autoEnableIsOn = optionIsOn(Config.autoEnable.state),
 	redirectModulesIsOn = optionIsOn(Config.redirectModules.state),
@@ -151,6 +152,7 @@ _Conf = {
 	limitUrlProtect = parseRuleFile(Config.limitReqModules.urlProtect),
 	cookieUrlProtect = parseRuleFile(Config.cookieModules.urlProtect),
 	whiteIpList = parseRuleFile(Config.whiteIpModules.ipList),
+	fileBlackIpList = parseRuleFile(Config.blackIpModules.ipList),
 
 	--读取文件到内存
 	captchaPage = readFile2Mem(Config.captchaPage),

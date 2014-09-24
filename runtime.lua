@@ -28,9 +28,18 @@ else
 	if _Conf.autoEnableIsOn then
 		ngx.timer.at(0,Guard.autoSwitch)
 	end
+
+	--永久黑名单
+	if Guard:ipInFileBlackList(ip) then
+		ngx.exit(404)
+	end
+
 		
 	--白名单模块
 	if not Guard:ipInWhiteList(ip) then
+		--收集不在白名单库里面的蜘蛛
+		Guard:collectSpiderIp(ip, headers)
+
 		--黑名单模块
 		Guard:blackListModules(ip,reqUri)
 

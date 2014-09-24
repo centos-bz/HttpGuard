@@ -49,6 +49,32 @@ function Guard:ipInWhiteList(ip)
 	end
 end
 
+function Guard:ipInFileBlackList(ip)
+	if _Conf.fileBlackIpModulesIsOn then
+		self:debug("[IpInFileBlackList] fileBlackIpModules is on.",ip,"")
+
+		if ngx.re.match(ip, _Conf.fileBlackIpList) then --匹配黑名单列表
+			self:debug("[ipInFileBlackList] ip "..ip.. " match black list ".._Conf.fileBlackIpList,ip,"")
+			return true
+		else
+			return false
+		end	
+	end
+end
+
+
+--收集不在白名单中的蜘蛛ip
+function Guard:collectSpiderIp(ip, headers)
+	spiderPattern = "baiduspider|360spider|sogou web spider|sogou inst spider|mediapartners|adsbot-google|googlebot"
+	userAgent = string.lower(headers["user-agent"])
+	if ngx.re.match(userAgent, spiderPattern) then 
+		local filename = _Conf.logPath.."/spider_ip.log"
+		local file = io.open(filename, "a+")
+		file:write(os.date('%Y-%m-%d %H:%M:%S').." IP "..ip.." UA "..userAgent.."\n")
+		file:close()
+	end
+end
+
 --黑名单模块
 function Guard:blackListModules(ip,reqUri)
 	local blackKey = ip.."black"
