@@ -90,7 +90,8 @@ function Guard:blackListModules(ip, reqUri, headers)
 			self:debug("[limitUaModules] ip "..ip.." not have ua", ip, reqUri)
 			self:takeAction(ip,reqUri) --存在则执行相应动作
 		end
-
+		
+		local uaMd5 = ngx.md5(userAgent)
 		local blackUaKey = uaMd5 .. 'BlackUAKey'
 		if _Conf.dict:get(blackUaKey) then --判断ua是否存在黑名单字典
 			self:debug("[blackListModules] ip "..ip.." in ua blacklist".." "..userAgent, ip, reqUri)
