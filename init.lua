@@ -139,7 +139,7 @@ _Conf = {
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
 	whiteIpModulesIsOn = optionIsOn(Config.whiteIpModules.state),
-	fileBlackIpModulesIsOn = optionIsOn(Config.blackIpModules.state)
+	fileBlackIpModulesIsOn = optionIsOn(Config.blackIpModules.state),
 	realIpFromHeaderIsOn = optionIsOn(Config.realIpFromHeader.state),
 	autoEnableIsOn = optionIsOn(Config.autoEnable.state),
 	redirectModulesIsOn = optionIsOn(Config.redirectModules.state),
