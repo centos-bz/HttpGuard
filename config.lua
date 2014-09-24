@@ -1,5 +1,5 @@
 -- http-guard安装目录，修改为实际安装到的目录。
-baseDir = '/data/www/waf/'
+baseDir = '/home/http-guard/'
 
 local Config = {
 	-- key是否动态生成,可选static,dynamic,如果选dynamic,下面所有的keySecret不需要更改,如果选static,修改手动修改下面的keySecret
