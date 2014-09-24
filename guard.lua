@@ -129,7 +129,7 @@ function Guard:limitUaModules(ip, reqUri, address, headers)
 		if newUaTimes > _Conf.limitUaModules.maxReqs then --判断是否请求数大于阀值
 			self:debug("[limitUaModules] ip "..ip.. " request exceed ".._Conf.limitUaModules.maxReqs.." "..userAgent, ip, reqUri)
 			_Conf.dict:set(blackUaKey, 0, _Conf.blockTime) --添加此ip到黑名单
-			self:log("[limitUaModules] IP "..ip.." visit "..newReqTimes.." times,block it. "..userAgent)
+			self:log("[limitUaModules] IP "..ip.." visit "..newUaTimes.." times,block it. "..userAgent)
 		end
 
 end
