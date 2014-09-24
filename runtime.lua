@@ -34,7 +34,6 @@ else
 		ngx.exit(404)
 	end
 
-		
 	--白名单模块
 	if not Guard:ipInWhiteList(ip) then
 		--收集不在白名单库里面的蜘蛛

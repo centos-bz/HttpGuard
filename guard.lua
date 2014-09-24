@@ -108,6 +108,14 @@ function Guard:limitReqModules(ip,reqUri,address)
 			self:debug("[limitReqModules] ip "..ip.. " request exceed ".._Conf.limitReqModules.maxReqs,ip,reqUri)
 			_Conf.dict:set(blackKey,0,_Conf.blockTime) --添加此ip到黑名单
 			self:log("[limitReqModules] IP "..ip.." visit "..newReqTimes.." times,block it.")
+
+			--大于20次的特别记录下来
+			if newReqTimes > 20 then
+				local filename = _Conf.logPath.."/large_flow.log"
+				local file = io.open(filename, "a+")
+				file:write(os.date('%Y-%m-%d %H:%M:%S').." IP "..ip.."\n")
+				file:close()
+			end
 		end
 
 	end
