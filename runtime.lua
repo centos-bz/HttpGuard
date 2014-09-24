@@ -40,9 +40,15 @@ else
 		Guard:collectSpiderIp(ip, headers)
 
 		--黑名单模块
-		Guard:blackListModules(ip,reqUri)
+		Guard:blackListModules(ip, reqUri, headers)
 
-		--限制请求速率模块
+		--限制UA请求速率模块
+		if _Conf.limitUaModulesIsOn then
+			Guard:debug("[limitUaModules] limitUaModules is on.",ip,reqUri)
+			Guard:limitUaModules(ip, reqUri, address, headers)
+		end
+
+		--限制IP请求速率模块
 		if _Conf.limitReqModulesIsOn then --limitReq模块是否开启
 			Guard:debug("[limitReqModules] limitReqModules is on.",ip,reqUri)
 			Guard:limitReqModules(ip,reqUri,address)

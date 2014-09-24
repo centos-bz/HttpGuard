@@ -65,8 +65,8 @@ end
 
 --收集不在白名单中的蜘蛛ip
 function Guard:collectSpiderIp(ip, headers)
-	spiderPattern = "baiduspider|360spider|sogou web spider|sogou inst spider|mediapartners|adsbot-google|googlebot"
-	userAgent = string.lower(headers["user-agent"])
+	local spiderPattern = "baiduspider|360spider|sogou web spider|sogou inst spider|mediapartners|adsbot-google|googlebot"
+	local userAgent = string.lower(headers["user-agent"])
 	if ngx.re.match(userAgent, spiderPattern) then 
 		local filename = _Conf.logPath.."/spider_ip.log"
 		local file = io.open(filename, "a+")
@@ -76,15 +76,65 @@ function Guard:collectSpiderIp(ip, headers)
 end
 
 --黑名单模块
-function Guard:blackListModules(ip,reqUri)
+function Guard:blackListModules(ip, reqUri, headers)
 	local blackKey = ip.."black"
 	if _Conf.dict:get(blackKey) then --判断ip是否存在黑名单字典
 		self:debug("[blackListModules] ip "..ip.." in blacklist",ip,reqUri)
 		self:takeAction(ip,reqUri) --存在则执行相应动作
-	end	
+	end
+
+	if _Conf.limitUaModulesIsOn then
+		local userAgent = headers["user-agent"]
+		--不存在UA直接抛验证码
+		if not userAgent then
+			self:debug("[limitUaModules] ip "..ip.." not have ua", ip, reqUri)
+			self:takeAction(ip,reqUri) --存在则执行相应动作
+		end
+
+		local blackUaKey = uaMd5 .. 'BlackUAKey'
+		if _Conf.dict:get(blackUaKey) then --判断ua是否存在黑名单字典
+			self:debug("[blackListModules] ip "..ip.." in ua blacklist".." "..userAgent, ip, reqUri)
+			self:takeAction(ip,reqUri) --存在则执行相应动作
+		end
+	end
 end
 
---限制请求速率模块
+--限制UA请求速率模块
+function Guard:limitUaModules(ip, reqUri, address, headers)
+	local userAgent = headers["user-agent"]
+	--不存在UA直接抛验证码
+	if not userAgent then
+		self:debug("[limitUaModules] ip "..ip.." not have ua", ip, reqUri)
+		self:takeAction(ip,reqUri) --存在则执行相应动作
+	end
+
+	local uaMd5 = ngx.md5(userAgent)
+	local blackUaKey = uaMd5 .. 'BlackUAKey'
+	local limitUaKey = uaMd5 .. 'LimitUaKey'
+	local uaTimes = _Conf.dict:get(limitUaKey) --获取此ua请求的次数
+
+	--增加一次请求记录
+	if uaTimes then
+		_Conf.dict:incr(limitUaKey, 1)
+	else
+		_Conf.dict:set(limitUaKey, 1, _Conf.limitUaModules.amongTime)
+		uaTimes = 0
+	end
+
+	local newUaTimes  = uaTimes + 1
+		self:debug("[limitUaModules] newUaTimes " .. newUaTimes .. "  " .. userAgent, ip, reqUri)
+
+		--判断请求数是否大于阀值,大于则添加黑名单
+		if newUaTimes > _Conf.limitUaModules.maxReqs then --判断是否请求数大于阀值
+			self:debug("[limitUaModules] ip "..ip.. " request exceed ".._Conf.limitUaModules.maxReqs.." "..userAgent, ip, reqUri)
+			_Conf.dict:set(blackUaKey, 0, _Conf.blockTime) --添加此ip到黑名单
+			self:log("[limitUaModules] IP "..ip.." visit "..newReqTimes.." times,block it. "..userAgent)
+		end
+
+end
+
+
+--限制IP请求速率模块
 function Guard:limitReqModules(ip,reqUri,address)
 	if ngx.re.match(address,_Conf.limitUrlProtect,"i") then	
 		self:debug("[limitReqModules] address "..address.." match reg ".._Conf.limitUrlProtect,ip,reqUri)	

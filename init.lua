@@ -121,6 +121,7 @@ end
 _Conf = {
 	
 	--引入原始设置
+	limitUaModules = Config.limitUaModules,
 	limitReqModules = Config.limitReqModules,
 	redirectModules = Config.redirectModules,
 	JsJumpModules = Config.JsJumpModules,
@@ -137,6 +138,7 @@ _Conf = {
 	captchaKey = Config.captchaKey,
 
 	--解析开关设置
+	limitUaModulesIsOn = optionIsOn(Config.limitUaModules.state),
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
 	whiteIpModulesIsOn = optionIsOn(Config.whiteIpModules.state),
 	fileBlackIpModulesIsOn = optionIsOn(Config.blackIpModules.state),
