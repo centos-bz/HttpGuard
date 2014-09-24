@@ -8,7 +8,7 @@ local Config = {
 	-- 被动防御,限制UA请求模块。根据在一定时间内统计到的单个UA请求次数作限制（专门针对火车头采集工具）
 	-- state : 为此模块的状态，表示开启或关闭，可选值为On或Off;
 	-- maxReqs，amongTime : 在amongTime秒内允许请求的最大次数maxReqs，如默认的是在10s内最大允许请求50次。
-	limitUaModules = { state = "On" , maxReqs = 5 , amongTime = 5},
+	limitUaModules = { state = "On" , maxReqs = 5 , amongTime = 300},
 
 	-- 被动防御,限制请求模块。根据在一定时间内统计到的请求次数作限制,建议始终开启
 	-- state : 为此模块的状态，表示开启或关闭，可选值为On或Off;
@@ -98,7 +98,7 @@ local Config = {
 	captchaDir = baseDir.."captcha/",
 
 	-- 是否开启debug日志
-	debug = false,
+	debug = true,
 
 	--日志目录,一般不需要修改.但需要设置logs所有者为nginx运行用户，如nginx运行用户为www，则命令为chown www logs
 	logPath = baseDir.."logs/",

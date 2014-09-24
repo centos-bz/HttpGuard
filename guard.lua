@@ -90,7 +90,7 @@ function Guard:blackListModules(ip, reqUri, headers)
 			self:debug("[limitUaModules] ip "..ip.." not have ua", ip, reqUri)
 			self:takeAction(ip,reqUri) --存在则执行相应动作
 		end
-		
+
 		local uaMd5 = ngx.md5(userAgent)
 		local blackUaKey = uaMd5 .. 'BlackUAKey'
 		if _Conf.dict:get(blackUaKey) then --判断ua是否存在黑名单字典
@@ -619,8 +619,27 @@ function Guard:verifyCaptcha(ip)
 	local captchaValue = _Conf.dict_captcha:get(captchaNum) --从字典获取post value对应的验证码值
 	if captchaValue == postValue then --比较验证码是否相等
 		self:debug("[verifyCaptcha] captcha is valid.delete from blacklist",ip,"")
+
 		_Conf.dict:delete(ip.."black") --从黑名单删除
 		_Conf.dict:delete(ip.."limitreqkey") --访问记录删除
+
+		if _Conf.limitUaModulesIsOn then
+			local headers = ngx.req.get_headers()
+			local userAgent = headers["user-agent"]
+			--不存在UA直接抛验证码
+			if not userAgent then
+				self:debug("[limitUaModules] ip "..ip.." not have ua", ip, reqUri)
+				self:takeAction(ip,reqUri) --存在则执行相应动作
+			end
+
+			local uaMd5 = ngx.md5(userAgent)
+			local blackUaKey = uaMd5 .. 'BlackUAKey'
+			local limitUaKey = uaMd5 .. 'LimitUaKey'
+
+			_Conf.dict:delete(blackUaKey) --从黑名单删除
+			_Conf.dict:delete(limitUaKey) --访问记录删除
+		end
+
 		local expire = ngx.time() + _Conf.keyExpire
 		local captchaKey = ngx.md5(table.concat({ip,_Conf.captchaKey,expire}))
 		local captchaKey = string.sub(captchaKey,"1","10")
