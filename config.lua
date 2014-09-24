@@ -83,7 +83,7 @@ local Config = {
 	whiteIpModules = { state = "On", ipList = baseDir.."url-protect/white_ip_list.txt" },
 
 	-- 黑名单ip文件,文件内容为正则表达式。
-	blackIpModules = { state = "On", ipList = baseDir.."url-protect/black_ip_list.txt" },
+	blackIpModules = { state = "Off", ipList = baseDir.."url-protect/black_ip_list.txt" },
 
 	-- 如果需要从请求头获取真实ip,此值就需要设置,如x-forwarded-for
 	-- 当state为on时,此设置才有效
