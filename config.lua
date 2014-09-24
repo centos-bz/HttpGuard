@@ -9,7 +9,7 @@ local Config = {
 	-- state : 为此模块的状态，表示开启或关闭，可选值为On或Off;
 	-- maxReqs，amongTime : 在amongTime秒内允许请求的最大次数maxReqs，如默认的是在10s内最大允许请求50次。
 	-- urlProtect : 指定限制请求次数的url正则表达式文件，默认值为\.php$，表示只限制php的请求(当然，当urlMatchMode = "uri"时，此正则才能起作用)
-	limitReqModules = { state = "On" , maxReqs = 50 , amongTime = 10, urlProtect = baseDir.."url-protect/limit.txt" },
+	limitReqModules = { state = "On" , maxReqs = 5 , amongTime = 86400, urlProtect = baseDir.."url-protect/limit.txt" },
 
 
 	-- 主动防御,302响应头跳转模块。利用cc控制端不支持解析响应头的特点，来识别是否为正常用户，当有必要时才建议开启。
@@ -60,7 +60,7 @@ local Config = {
 	sudoPass = '',
 
 	-- 表示http-guard封锁ip的时间
-	blockTime = 600,
+	blockTime = 86400,
 
 	-- JsJumpModules redirectModules cookieModules验证通过后,ip在白名单的时间
 	whiteTime = 600,
