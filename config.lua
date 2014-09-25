@@ -71,7 +71,7 @@ local Config = {
 	whiteTime = 600,
 
 	-- 用于生成token密码的key过期时间
-	keyExpire = 0,
+	keyExpire = 600,
 
 	-- 匹配url模式，可选值requestUri,uri
 	-- 值requestUri时,url-protect目录下的正则匹配的是浏览器最初请求的地址且没有被decode,带参数的链接
