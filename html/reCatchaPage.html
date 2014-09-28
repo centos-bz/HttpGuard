@@ -141,8 +141,8 @@
     .btn:focus, .btn:active:focus, .btn.active:focus {
         outline: 0
     }
-.red {
-      color: #ce2029
+    .red {
+        color: #ce2029
     }
     </style>
 </head>
@@ -157,6 +157,7 @@
                 <p>您正常浏览时也有可能触发防攻击程序</p>
             </div>
             <p class="red">请输入验证码继续访问!!!</p>
+            <p><font color="red">验证码输入错误，请重新输入</font></p>
             <form class="r" action="/verify-captcha.jpg" method="POST">
                 <div class="fg sm4"><img class="" src="/get-captcha.jpg" alt="Captcha image"></div>
                 <div class="fg sm5"><input class="fc" type="text" name="response"/></p></div>
