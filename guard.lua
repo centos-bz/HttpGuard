@@ -79,7 +79,7 @@ end
 function Guard:blackListModules(ip, reqUri, headers)
 	local blackKey = ip.."black"
 	if _Conf.dict:get(blackKey) then --判断ip是否存在黑名单字典
-		self:debug("[blackListModules] ip "..ip.." in blacklist",ip,reqUri)
+		self:debug("[IpblackListModules] ip "..ip.." in blacklist",ip,reqUri)
 		self:takeAction(ip,reqUri) --存在则执行相应动作
 	end
 
@@ -94,7 +94,7 @@ function Guard:blackListModules(ip, reqUri, headers)
 		local uaMd5 = ngx.md5(userAgent)
 		local blackUaKey = uaMd5 .. 'BlackUAKey'
 		if _Conf.dict:get(blackUaKey) then --判断ua是否存在黑名单字典
-			self:debug("[blackListModules] ip "..ip.." in ua blacklist".." "..userAgent, ip, reqUri)
+			self:debug("[UablackListModules] ip "..ip.." in ua blacklist".." "..userAgent, ip, reqUri)
 			self:takeAction(ip,reqUri) --存在则执行相应动作
 		end
 	end
