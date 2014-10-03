@@ -4,15 +4,15 @@ HttpGuard是基于openresty,以lua脚本语言开发的防cc攻击软件。而op
 
 下面介绍HttpGuard防cc的一些特性：
 
-1.限制单个IP或者UA在一定时间内的请求次数
-2.向访客发送302转向响应头来识别恶意用户,并阻止其再次访问
-3.向访客发送带有跳转功能的js代码来识别恶意用户，并阻止其再次访问
-4.向访客发送cookie来识别恶意用户,并阻止其再次访问
-5.支持向访客发送带有验证码的页面，来进一步识别，以免误伤
-6.支持直接断开恶意访客的连接
-7.支持结合iptables来阻止恶意访客再次连接
-8.支持白名单/黑名单功能
-9.支持根据统计特定端口的连接数来自动开启或关闭防cc模式
+1. 限制单个IP或者UA在一定时间内的请求次数
+2. 向访客发送302转向响应头来识别恶意用户,并阻止其再次访问
+3. 向访客发送带有跳转功能的js代码来识别恶意用户，并阻止其再次访问
+4. 向访客发送cookie来识别恶意用户,并阻止其再次访问
+5. 支持向访客发送带有验证码的页面，来进一步识别，以免误伤
+6. 支持直接断开恶意访客的连接
+7. 支持结合iptables来阻止恶意访客再次连接
+8. 支持白名单/黑名单功能
+9. 支持根据统计特定端口的连接数来自动开启或关闭防cc模式
 
 ## 部署HttpGuard
 ### 安装openresty或者nginx lua
@@ -57,14 +57,4 @@ lua_max_running_timers 1;
 
 ### 配置HttpGuard
 
-1.HttpGuard安装目录，修改为实际安装到的目录。
-
-```
-baseDir = '/data/www/waf/'
-```
-
-2.key是否动态生成,可选static,dynamic,如果选dynamic,下面所有的keySecret不需要更改,如果选static,修改手动修改下面的keySecret
-
-```
-keyDefine = "dynamic",
-```
+详细配置说明在[config.lua](https://github.com/wenjun1055/HttpGuard/blob/master/guard.lua)中，请根据需求进行配置
