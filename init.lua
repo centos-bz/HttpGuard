@@ -179,7 +179,9 @@ _Conf = {
 }
 
 --读取验证码到字典
-readCaptcha2Dict(_Conf.captchaDir,_Conf.dict_captcha)
+if Config.blockAction == "captcha" then
+	readCaptcha2Dict(_Conf.captchaDir,_Conf.dict_captcha)
+end	
 
 --判断redirectModules是否开启
 if _Conf.redirectModulesIsOn then
