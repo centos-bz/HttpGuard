@@ -6,6 +6,11 @@ local reqUri = ngx.var.request_uri
 local uri = ngx.var.uri
 local address = ''
 
+local limitModule = ngx.var.limit_module
+local redirectModule = ngx.var.redirect_module
+local jsModule = ngx.var.js_module
+local cookieModule = ngx.var.cookie_module
+
 --判断是某种url匹配模式
 if _Conf.uriMode then
 	address = uri
@@ -36,6 +41,11 @@ else
 
 		--限制请求速率模块
 		if _Conf.limitReqModulesIsOn then --limitReq模块是否开启
+			if not (limitModule == "off") then
+				Guard:debug("[limitReqModules] limitReqModules is on.",ip,reqUri)
+				Guard:limitReqModules(ip,reqUri,address)
+			end
+		elseif limitModule == "on" then
 			Guard:debug("[limitReqModules] limitReqModules is on.",ip,reqUri)
 			Guard:limitReqModules(ip,reqUri,address)
 		end
@@ -43,22 +53,37 @@ else
 		--302转向模块
 		local redirectOn = _Conf.dict_captcha:get("redirectOn")
 		if redirectOn == 1 then --判断转向模块是否开启
+			if not (redirectModule == "off") then
+				Guard:debug("[redirectModules] redirectModules is on.",ip,reqUri)
+				Guard:redirectModules(ip,reqUri,address)
+			end
+		elseif redirectModule == "on" then
 			Guard:debug("[redirectModules] redirectModules is on.",ip,reqUri)
-			Guard:redirectModules(ip,reqUri,address)
+			Guard:redirectModules(ip,reqUri,address)		 		
 		end	
 
 		--js跳转模块
 		local jsOn = _Conf.dict_captcha:get("jsOn")
 		if jsOn == 1 then --判断js跳转模块是否开启
+			if not (jsModule == "off") then
+				Guard:debug("[JsJumpModules] JsJumpModules is on.",ip,reqUri)
+				Guard:JsJumpModules(ip,reqUri,address)
+			end
+		elseif jsModule == "on" then
 			Guard:debug("[JsJumpModules] JsJumpModules is on.",ip,reqUri)
-			Guard:JsJumpModules(ip,reqUri,address)
+			Guard:JsJumpModules(ip,reqUri,address)				
 		end
 
 		--cookie验证模块
 		local cookieOn = _Conf.dict_captcha:get("cookieOn")
 		if cookieOn == 1 then --判断是否开启cookie模块
+			if not (cookieModule == "off") then
+				Guard:debug("[cookieModules] cookieModules is on.",ip,reqUri)
+				Guard:cookieModules(ip,reqUri,address)
+			end
+		elseif cookieModule == "on" then
 			Guard:debug("[cookieModules] cookieModules is on.",ip,reqUri)
-			Guard:cookieModules(ip,reqUri,address)
+			Guard:cookieModules(ip,reqUri,address)				
 		end
 			
 	end	
