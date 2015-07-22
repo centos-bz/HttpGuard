@@ -33,13 +33,27 @@ else
 	if _Conf.autoEnableIsOn then
 		ngx.timer.at(0,Guard.autoSwitch)
 	end
-		
+
+	--永久黑名单
+	if Guard:ipInFileBlackList(ip) then
+		ngx.exit(404)
+	end
+
 	--白名单模块
 	if not Guard:ipInWhiteList(ip) then
-		--黑名单模块
-		Guard:blackListModules(ip,reqUri)
+		--收集不在白名单库里面的蜘蛛
+		Guard:collectSpiderIp(ip, headers)
 
-		--限制请求速率模块
+		--黑名单模块
+		Guard:blackListModules(ip, reqUri, headers)
+
+		--限制UA请求速率模块
+		if _Conf.limitUaModulesIsOn then
+			Guard:debug("[limitUaModules] limitUaModules is on.",ip,reqUri)
+			Guard:limitUaModules(ip, reqUri, address, headers)
+		end
+
+		--限制IP请求速率模块
 		if _Conf.limitReqModulesIsOn then --limitReq模块是否开启
 			if not (limitModule == "off") then
 				Guard:debug("[limitReqModules] limitReqModules is on.",ip,reqUri)

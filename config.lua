@@ -1,15 +1,20 @@
 -- http-guard安装目录，修改为实际安装到的目录。
-baseDir = '/data/www/waf/'
+baseDir = '/home/http-guard/'
 
 local Config = {
 	-- key是否动态生成,可选static,dynamic,如果选dynamic,下面所有的keySecret不需要更改,如果选static,修改手动修改下面的keySecret
 	keyDefine = "dynamic",
 
+	-- 被动防御,限制UA请求模块。根据在一定时间内统计到的单个UA请求次数作限制（专门针对火车头采集工具）
+	-- state : 为此模块的状态，表示开启或关闭，可选值为On或Off;
+	-- maxReqs，amongTime : 在amongTime秒内允许请求的最大次数maxReqs，如默认的是在10s内最大允许请求50次。
+	limitUaModules = { state = "On" , maxReqs = 5 , amongTime = 300},
+
 	-- 被动防御,限制请求模块。根据在一定时间内统计到的请求次数作限制,建议始终开启
 	-- state : 为此模块的状态，表示开启或关闭，可选值为On或Off;
 	-- maxReqs，amongTime : 在amongTime秒内允许请求的最大次数maxReqs，如默认的是在10s内最大允许请求50次。
 	-- urlProtect : 指定限制请求次数的url正则表达式文件，默认值为\.php$，表示只限制php的请求(当然，当urlMatchMode = "uri"时，此正则才能起作用)
-	limitReqModules = { state = "On" , maxReqs = 50 , amongTime = 10, urlProtect = baseDir.."url-protect/limit.txt" },
+	limitReqModules = { state = "On" , maxReqs = 5 , amongTime = 86400, urlProtect = baseDir.."url-protect/limit.txt" },
 
 
 	-- 主动防御,302响应头跳转模块。利用cc控制端不支持解析响应头的特点，来识别是否为正常用户，当有必要时才建议开启。
@@ -60,7 +65,7 @@ local Config = {
 	sudoPass = '',
 
 	-- 表示http-guard封锁ip的时间
-	blockTime = 600,
+	blockTime = 86400,
 
 	-- JsJumpModules redirectModules cookieModules验证通过后,ip在白名单的时间
 	whiteTime = 600,
@@ -80,7 +85,10 @@ local Config = {
 	reCaptchaPage = baseDir.."html/reCatchaPage.html",
 
 	-- 白名单ip文件,文件内容为正则表达式。
-	whiteIpModules = { state = "Off", ipList = baseDir.."url-protect/white_ip_list.txt" },
+	whiteIpModules = { state = "On", ipList = baseDir.."url-protect/white_ip_list.txt" },
+
+	-- 黑名单ip文件,文件内容为正则表达式。
+	blackIpModules = { state = "Off", ipList = baseDir.."url-protect/black_ip_list.txt" },
 
 	-- 如果需要从请求头获取真实ip,此值就需要设置,如x-forwarded-for
 	-- 当state为on时,此设置才有效
@@ -90,7 +98,7 @@ local Config = {
 	captchaDir = baseDir.."captcha/",
 
 	-- 是否开启debug日志
-	debug = false,
+	debug = true,
 
 	--日志目录,一般不需要修改.但需要设置logs所有者为nginx运行用户，如nginx运行用户为www，则命令为chown www logs
 	logPath = baseDir.."logs/",

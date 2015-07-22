@@ -1,24 +1,171 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <title>请输入验证码</title>
-        <style> body { font-family: Tahoma, Verdana, Arial, sans-serif; } 
-			.head_title{margin-top:100px; font-family:"微软雅黑"; font-size:50px; font-weight:lighter;}	
-			p{font-family:"微软雅黑"; font-size:16px; font-weight:lighter; color:#666666;}
-			.btn{ float:left;margin-left:15px; margin-top:5px; width:85px; height:30px; background:#56c458;font-family:"微软雅黑"; font-size:16px; color:#FFFFFF; border:0;}
-			.inp_s{ float:left; margin-left:15px; margin-top:5px; width:200px; height:30px;}
-			.yz{float:left; width:160px; height:40px;}
-			.fors{ margin:0 auto;width:500px; height:40px;}
-		</style>
-    </head>
-    <body>
-        <div align="center">
-			<p><h1 class="head_title">很抱歉...</h1></p>
-			<p>您的查询看起来类似于来自计算机软件的自动请求。为了保护我们的用户，请原谅我们现在暂时不能处理您的请求。 </p>
-			<p>要继续访问网页，请输入下面所示字符：</p>
-            <form  class="fors"  action="/verify-captcha.jpg" method="POST">
-            <img class="yz" src="/get-captcha.jpg" alt="Captcha image"><input class="inp_s" type="text" name="response" /><input class="btn" type="submit" value="确定" />
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <title>请输入验证码</title>
+    <style>html, body {
+        height: 100%
+    }
+    body {
+        font-family: "微软雅黑","宋体" Tahoma, Verdana, Arial, sans-serif;
+        font: 12px/1.5 arial, \5b8b\4f53;
+        background-color: #fff;
+        margin: 0 auto
+    }
+
+    body, div, h1, form, input {
+        margin: 0;
+        padding: 0
+    }
+    * {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box
+    }
+    button::-moz-focus-inner, input::-moz-focus-inner {
+        border: 0;
+        padding: 0
+    }
+    h1 {
+        margin-top: 100px;
+        font-family: "微软雅黑";
+        font-size: 50px;
+        font-weight: lighter
+    }
+    p {
+        font-family: "微软雅黑";
+        font-size: 16px;
+        font-weight: lighter;
+        color: #666
+    }
+    .w {
+        margin-right: auto;
+        margin-left: auto;
+        padding-left: 15px;
+        padding-right: 15px
+    }
+    .r {
+        margin-left: -15px;
+        margin-right: -15px
+    }
+    @media (min-width: 768px) {
+        .w {
+            width: 750px
+        }
+    }
+    @media (min-width: 992px) {
+        .w {
+            width: 970px
+        }
+    }
+    @media (min-width: 1200px) {
+        .w {
+            width: 1170px
+        }
+    }
+    .sm3, .sm4, .sm5, .md8 {
+        position: relative;
+        min-height: 1px;
+        padding-left: 15px;
+        padding-right: 15px
+    }
+    @media (min-width: 768px) {
+        .sm3, .sm4, .sm5 {
+            float: left
+        }
+        .sm5 {
+            width: 41.66666667%
+        }
+        .sm4 {
+            width: 33.33333333%
+        }
+        .sm3 {
+            width: 25%
+        }
+    }
+    @media (min-width: 992px) {
+        .md8 {
+            float: left
+        }
+        .md8 {
+            width: 66.66666667%
+        }
+        .os2 {
+            margin-left: 16.66666667%
+        }
+    }
+    .fg {
+        margin-bottom: 15px
+    }
+    .w:before, .w:after, .r:before, .r:after, .fg:before, .fg:after {
+        content: " ";
+        display: table
+    }
+    .w:after, .r:after, .fg:after {
+        clear: both
+    }
+    .fc {
+        display: block;
+        width: 100%;
+        height: 34px;
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        border: 1px solid #ddd;
+        border-radius: 3px
+    }
+    .fc:focus {
+        outline: 0;
+        box-shadow: 0 0 10px rgba(0, 0, 0, .2)
+    }
+    .fc::-moz-placeholder {
+        color: #999;
+        opacity: 1
+    }
+    .btn {
+        display: block;
+        width: 100%;
+        font-weight: normal;
+        cursor: pointer;
+        background-color: #2cc1b1;
+        border-color: transparent;
+        color: #fff;
+        border: 1px solid transparent;
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        border-radius: 3px
+    }
+    .btn:focus, .btn:active:focus, .btn.active:focus {
+        outline: 0
+    }
+.red {
+      color: #ce2029
+    }
+    </style>
+</head>
+<body>
+<div class="w" align="center">
+    <div class="r">
+        <div class="md8 os2">
+            <p><br /></p>
+            <div style="border: 1px solid #e9e9e9; width: 100%; font-size: 14px; padding: 5px; margin: 10px 0 10px 0; background: #fcfcfc; line-height: 20px;">
+                <p>本站为防止被恶意攻击已开启验证机制</p>
+                <p>此验证页面仅在被认为恶意攻击时出现</p>
+                <p>您正常浏览时也有可能触发防攻击程序</p>
+            </div>
+            <p class="red">请输入验证码继续访问!!!</p>
+            <form class="r" action="/verify-captcha.jpg" method="POST">
+                <div class="fg sm4"><img class="" src="/get-captcha.jpg" alt="Captcha image"></div>
+                <div class="fg sm5"><input class="fc" type="text" name="response"/></p></div>
+                <div class="fg sm3">
+                    <button id="login" type="submit" class="btn btn-green">确定</button>
+                </div>
             </form>
         </div>
-    </body>
+    </div>
+</div>
+</body>
 </html>
