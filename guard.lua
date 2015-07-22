@@ -22,17 +22,21 @@ end
 
 --获取真实ip
 function Guard:getRealIp(remoteIp,headers)
-	if _Conf.realIpFromHeaderIsOn then
-		readIp = headers[_Conf.realIpFromHeader.header]
-		if readIp then
-			self:debug("[getRealIp] realIpFromHeader is on.return ip "..readIp,remoteIp,"")
-			return headers[_Conf.realIpFromHeader.header]
-		else
-			return remoteIp
-		end	
-	else
-		return remoteIp
-	end	
+    if _Conf.realIpFromHeaderIsOn then
+        realIp = headers[_Conf.realIpFromHeader.header]
+        if realIp then
+            if type(realIp) == "table" then
+                len = table.getn(realIp)
+                realIp = realIp[len]
+            end      
+            self:debug("[getRealIp] realIpFromHeader is on.return ip "..realIp,remoteIp,"")
+            return realIp
+        else
+            return remoteIp
+        end     
+    else
+        return remoteIp
+    end     
 end
 
 --白名单模块
