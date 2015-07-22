@@ -26,8 +26,7 @@ function Guard:getRealIp(remoteIp,headers)
         realIp = headers[_Conf.realIpFromHeader.header]
         if realIp then
             if type(realIp) == "table" then
-                len = table.getn(realIp)
-                realIp = realIp[len]
+                realIp = realIp[1]
             end      
             self:debug("[getRealIp] realIpFromHeader is on.return ip "..realIp,remoteIp,"")
             return realIp
