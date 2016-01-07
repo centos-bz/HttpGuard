@@ -56,6 +56,9 @@ local Config = {
 	-- 3.以根用户执行visudo命令，找到Default requiretty注释，即更改为#Default requiretty，如果找不到此设置，就不需要改。
 	blockAction = "captcha",
 
+	-- 用户IP在黑名单且blockAction为captcha时访问验证码页面超过一定次数触发iptables封锁
+	captchaToIptables = { state = "off", maxReqs = 10 , amongTime = 10},
+
 	-- nginx运行用户的sudo密码,blockAction值为iptables需要设置,否则不需要
 	sudoPass = '',
 

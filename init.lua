@@ -135,6 +135,7 @@ _Conf = {
 	sudoPass = Config.sudoPass,
 	whiteTime = Config.whiteTime,
 	captchaKey = Config.captchaKey,
+	captchaToIptables = Config.captchaToIptables,
 
 	--解析开关设置
 	limitReqModulesIsOn = optionIsOn(Config.limitReqModules.state),
@@ -144,6 +145,7 @@ _Conf = {
 	redirectModulesIsOn = optionIsOn(Config.redirectModules.state),
 	JsJumpModulesIsOn = optionIsOn(Config.JsJumpModules.state),
 	cookieModulesIsOn = optionIsOn(Config.cookieModules.state),
+	captchaToIptablesIsOn = optionIsOn(Config.captchaToIptables.state),
 
 	--解析文件到正则
 	redirectUrlProtect = parseRuleFile(Config.redirectModules.urlProtect),

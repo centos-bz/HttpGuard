@@ -562,7 +562,30 @@ function Guard:forbiddenAction()
 end
 
 --展示验证码页面动作
-function Guard:captchaAction(reqUri)
+function Guard:captchaAction(ip,reqUri)
+	-- 访问验证码超过一定次数使用iptables封锁
+	if _Conf.captchaToIptablesIsOn then
+		local captchaReqKey = ip.."captchareqkey" --定义captcha req key
+		local reqTimes = _Conf.dict:get(captchaReqKey) --获取此ip验证码请求的次数
+		--增加一次请求记录
+		if reqTimes then
+			_Conf.dict:incr(captchaReqKey, 1)
+		else
+			_Conf.dict:set(captchaReqKey, 1, _Conf.captchaToIptables.amongTime)
+			reqTimes = 0
+		end
+
+		local newReqTimes  = reqTimes + 1
+		self:debug("[captchaToIptables] newReqTimes "..newReqTimes,ip,reqUri)
+		--判断请求数是否大于阀值,大于则iptables封锁
+		if newReqTimes > _Conf.captchaToIptables.maxReqs then --判断是否请求数大于阀值
+			self:debug("[captchaToIptables] ip "..ip.. " request exceed ".._Conf.captchaToIptables.maxReqs,ip,reqUri)
+			ngx.thread.spawn(Guard.addToIptables,Guard,ip) -- iptables封锁
+			self:log("[captchaToIptables] IP "..ip.." visit "..newReqTimes.." times,iptables block it.")
+		end
+
+	end
+
 	ngx.header.content_type = "text/html"
 	ngx.header['Set-Cookie'] = table.concat({"preurl=",reqUri,"; path=/"})
 	ngx.print(_Conf.captchaPage)
@@ -587,11 +610,11 @@ function Guard:takeAction(ip,reqUri)
 				return
 			else
 				self:debug("[takeAction] cookie key is invalid",ip,reqUri)
-				self:captchaAction(reqUri)
+				self:captchaAction(ip,reqUri)
 			end	
 		else	
 			self:debug("[takeAction] return captchaAction",ip,reqUri)
-			self:captchaAction(reqUri)
+			self:captchaAction(ip,reqUri)
 		end	
 	elseif _Conf.forbiddenAction then
 		self:debug("[takeAction] return forbiddenAction",ip,reqUri)
