@@ -515,7 +515,7 @@ function Guard:getCaptcha()
 	local random = math.random(1,10000) --生成1-10000之前的随机数
 	self:debug("[getCaptcha] get random num "..random,"","")
 	local captchaValue = _Conf.dict_captcha:get(random) --取得字典中的验证码
-	self:debug("[getCaptcha] get captchaValue "..captchaValue,"","")
+        self:debug("[getCaptcha] get captchaValue "..(captchaValue or "nil"),"","")
 	local captchaImg = _Conf.dict_captcha:get(captchaValue) --取得验证码对应的图片
 	--返回图片
 	ngx.header.content_type = "image/jpeg"
